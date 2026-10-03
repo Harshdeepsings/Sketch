@@ -1,13 +1,14 @@
 import dotenv from "dotenv";
 dotenv.config();
-import express from "express"; 
+import express from "express";
+import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
 
 import UserRoutes from "./Routes/UserRoutes";
 import CanvasRoutes from "./Routes/CanvasRoutes";
-import { error } from "node:console";
 
 const app = express();
+app.use(cookieParser());
 
 const connectDB = async() => {
     try{
