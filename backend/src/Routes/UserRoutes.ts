@@ -3,6 +3,7 @@ import { UserSchema } from "../UserValidation";
 import { UserModel } from "../db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { UserMiddleware } from "../Middleware";
 
 const UserRoutes = Router();
 
@@ -122,11 +123,11 @@ UserRoutes.post("signin", async (req, res) => {
     
 });
 
-UserRoutes.post("show", (req, res) => {
+UserRoutes.post("show", UserMiddleware, (req, res) => {
 
 });
 
-UserRoutes.post("logout", async (req, res) => {
+UserRoutes.post("logout", UserMiddleware, async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
     
