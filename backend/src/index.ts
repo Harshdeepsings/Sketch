@@ -26,13 +26,4 @@ const connectDB = async() => {
 app.use("api/v1/user", UserRoutes);
 app.use("api/v1/canvas", CanvasRoutes);
 
-app.get("canvas", (req, res) => {
-
-});
-
-app.post("canvas", (req, res) => {
-
-});
-
-
 connectDB();
