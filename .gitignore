@@ -1,12 +1,29 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment Variables & Secrets
 .env
 .env.*
+!.env.example
 
-# Build output
+# Production & Build Outputs
 dist/
+dist-ssr/
+build/
+out/
 
-# TypeScript build information
+# TypeScript Build Artifacts
 *.tsbuildinfo
+
+# Logs & Debugging
+logs/
+*.log
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# IDE & Editor Files
+.vscode/
+.idea/
+*.swp
