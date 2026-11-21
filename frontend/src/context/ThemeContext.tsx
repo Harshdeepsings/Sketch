@@ -16,7 +16,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem("sketch_theme");
+    const saved = localStorage.getItem("sketchh_theme") || localStorage.getItem("sketch_theme");
     if (saved === "light" || saved === "dark") return saved;
     return "dark";
   });
@@ -28,7 +28,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("sketch_theme", theme);
+    localStorage.setItem("sketchh_theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {

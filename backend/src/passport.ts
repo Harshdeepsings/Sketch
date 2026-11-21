@@ -58,12 +58,12 @@ export function configurePassport(): typeof passport {
             }
 
             // Create new user for first-time Google sign in
-            const rawName = profile.displayName || profile.name?.givenName || "Sketcher";
+            const rawName = profile.displayName || profile.name?.givenName || "Sketchher";
             const baseUsername =
               rawName
                 .toLowerCase()
                 .replace(/[^a-z0-9_]/g, "")
-                .slice(0, 14) || "sketcher";
+                .slice(0, 14) || "sketchher";
             const suffix = Math.random().toString(36).substring(2, 6);
             const username = `${baseUsername}_${suffix}`;
 

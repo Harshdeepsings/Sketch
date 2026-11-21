@@ -70,7 +70,7 @@ export const Login: React.FC = () => {
               <Compass className="w-5 h-5" />
             </div>
             <div className="text-[10px] font-mono uppercase tracking-wider text-(--accent-primary) font-bold mb-1">
-              LOG IN TO SKETCH
+              LOG IN TO SKETCHH
             </div>
             <h1 className="text-3xl font-bold font-pencil tracking-tight text-(--text-primary)">
               Welcome back
@@ -136,7 +136,7 @@ export const Login: React.FC = () => {
               className="w-full mt-2 font-semibold"
               endIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Log in to Sketch
+              Log in to Sketchh
             </Button>
 
             {/* Divider */}

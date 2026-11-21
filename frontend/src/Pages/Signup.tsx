@@ -71,7 +71,7 @@ export const Signup: React.FC = () => {
               GET STARTED FREE
             </div>
             <h1 className="text-3xl font-bold font-pencil tracking-tight text-(--text-primary)">
-              Create your Sketch account
+              Create your Sketchh account
             </h1>
             <p className="text-xs text-(--text-muted) mt-1">
               Free real-time whiteboarding for you and your team

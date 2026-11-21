@@ -14,7 +14,7 @@ interface Particle {
   spin: number;
 }
 
-export const SketchParticles: React.FC<{ className?: string }> = ({ className = "" }) => {
+export const SketchhParticles: React.FC<{ className?: string }> = ({ className = "" }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const { theme } = useTheme();
 
@@ -185,3 +185,5 @@ export const SketchParticles: React.FC<{ className?: string }> = ({ className = 
     />
   );
 };
+
+export const SketchParticles = SketchhParticles;

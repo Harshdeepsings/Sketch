@@ -9,6 +9,7 @@
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     --font-pencil: 'Architects Daughter', 'Kalam', cursive;
     --font-sketch: 'Architects Daughter', cursive;
+    --font-sketchh: 'Architects Daughter', cursive;
 
     --bg-main: #F4F7FB;
     --bg-surface: #FFFFFF;
@@ -40,6 +41,7 @@
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
     --font-pencil: 'Architects Daughter', 'Kalam', cursive;
     --font-sketch: 'Architects Daughter', cursive;
+    --font-sketchh: 'Architects Daughter', cursive;
 
     --bg-main: #070913;
     --bg-surface: #0E1120;
@@ -85,7 +87,7 @@ body {
 .font-pencil {
   font-family: var(--font-pencil);
 }
-.font-sketch {
+.font-sketch, .font-sketchh {
   font-family: var(--font-sketch);
 }
 .font-mono-draft {

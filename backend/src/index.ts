@@ -45,7 +45,7 @@ app.use(cookieParser());
 
 // Express Session Configuration using MongoDB Store
 export const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "sketch-session-secret-key-2026",
+  secret: process.env.SESSION_SECRET || "sketchh-session-secret-key-2026",
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({

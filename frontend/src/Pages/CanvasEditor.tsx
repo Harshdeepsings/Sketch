@@ -705,7 +705,7 @@ export const CanvasEditor: React.FC = () => {
     return (
       <div className="min-h-screen bg-(--bg-main) text-(--text-primary) flex flex-col items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin mb-3" />
-        <span className="text-xs text-(--text-muted) font-medium">Loading Sketch Canvas...</span>
+        <span className="text-xs text-(--text-muted) font-medium">Loading Sketchh Canvas...</span>
       </div>
     );
   }

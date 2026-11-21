@@ -22,11 +22,11 @@ export const Privacy: React.FC = () => {
 
         <div className="space-y-8 text-sm leading-relaxed text-(--text-secondary)">
           <p>
-            Welcome to Sketch ("Sketch," "we," "our," or "us"). We value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect information when you use our website, drawing tools, and collaboration features (collectively, the "Service").
+            Welcome to Sketchh ("Sketchh," "we," "our," or "us"). We value your privacy and are committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and protect information when you use our website, drawing tools, and collaboration features (collectively, the "Service").
           </p>
 
           <p>
-            By using Sketch, you acknowledge that you have read this Privacy Policy.
+            By using Sketchh, you acknowledge that you have read this Privacy Policy.
           </p>
 
           <section className="space-y-3">
@@ -74,7 +74,7 @@ export const Privacy: React.FC = () => {
 
             <div className="space-y-2 pt-2">
               <h3 className="text-sm font-semibold text-(--text-primary)">1.4 Technical Information</h3>
-              <p>When you access Sketch, our infrastructure or service providers may process technical information such as:</p>
+              <p>When you access Sketchh, our infrastructure or service providers may process technical information such as:</p>
               <ul className="list-disc pl-5 space-y-1">
                 <li>IP address and basic browser or device information.</li>
                 <li>Connection logs, timestamps, and error reports.</li>
@@ -105,7 +105,7 @@ export const Privacy: React.FC = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-(--text-primary)">3. How We Store and Protect Your Information</h2>
             <p>
-              Sketch may use a database and third-party infrastructure providers to store account information, workspace data, and drawing content.
+              Sketchh may use a database and third-party infrastructure providers to store account information, workspace data, and drawing content.
             </p>
             <p>
               We use reasonable technical and organizational safeguards appropriate to the Service. These may include password hashing, authenticated sessions or tokens, access controls, secure connections, and server-side permission checks.
@@ -131,14 +131,14 @@ export const Privacy: React.FC = () => {
               Do not assume that a drawing is private if you have shared it with others. Recipients may be able to copy, export, or otherwise retain content they can access.
             </p>
             <p>
-              Sketch should not be considered a secure end-to-end encrypted storage service unless that capability is explicitly implemented and documented.
+              Sketchh should not be considered a secure end-to-end encrypted storage service unless that capability is explicitly implemented and documented.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-(--text-primary)">5. Cookies and Authentication</h2>
             <p>
-              Sketch and its infrastructure providers may use cookies, local storage, or similar technologies to maintain authentication, remember preferences, and protect the Service.
+              Sketchh and its infrastructure providers may use cookies, local storage, or similar technologies to maintain authentication, remember preferences, and protect the Service.
             </p>
             <p>
               The technologies used depend on the application's implementation. You can manage cookies through your browser, but disabling certain technologies may affect login or other features.
@@ -148,7 +148,7 @@ export const Privacy: React.FC = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-(--text-primary)">6. Third-Party Services</h2>
             <p>
-              Sketch may rely on third-party services for hosting, database storage, authentication-related infrastructure, error monitoring, or other operational functions.
+              Sketchh may rely on third-party services for hosting, database storage, authentication-related infrastructure, error monitoring, or other operational functions.
             </p>
             <p>
               These providers may process information on our behalf to deliver their services. Their handling of information is also subject to their applicable policies and contractual obligations.
@@ -189,7 +189,7 @@ export const Privacy: React.FC = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-(--text-primary)">9. Children's Privacy</h2>
             <p>
-              Sketch is not intended for children who are prohibited from using the Service under applicable law. We do not knowingly collect personal information from children where doing so would be unlawful. If you believe a child has provided personal information inappropriately, contact us so we can review the matter.
+              Sketchh is not intended for children who are prohibited from using the Service under applicable law. We do not knowingly collect personal information from children where doing so would be unlawful. If you believe a child has provided personal information inappropriately, contact us so we can review the matter.
             </p>
           </section>
 
@@ -209,7 +209,7 @@ export const Privacy: React.FC = () => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-(--border-subtle) flex items-center justify-between text-xs text-(--text-muted) font-mono">
-          <span>Sketch • Collaborative Canvas</span>
+          <span>Sketchh • Collaborative Canvas</span>
           <Link to="/" className="text-(--accent-primary) hover:underline">
             Return to Home
           </Link>

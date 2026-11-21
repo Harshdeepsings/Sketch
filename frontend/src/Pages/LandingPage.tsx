@@ -746,7 +746,7 @@ export const LandingPage: React.FC = () => {
     else if (id === "rect" || id === "circle") setLeadWidth(2.5);
   };
 
-  // Highlights for what makes Sketch great
+  // Highlights for what makes Sketchh great
   const projectHighlights = [
     {
       id: "01",
@@ -804,7 +804,7 @@ export const LandingPage: React.FC = () => {
         <div className="flex items-center gap-4">
           <span className="font-semibold text-(--text-primary) flex items-center gap-1.5">
             <Compass className="w-3.5 h-3.5 text-(--accent-primary)" />
-            <span>Sketch — Real-time Visual Collaboration</span>
+            <span>Sketchh — Real-time Visual Collaboration</span>
           </span>
           <span className="hidden lg:inline text-(--border-strong)">|</span>
           <TopRibbonCoords />
@@ -1051,7 +1051,7 @@ export const LandingPage: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10 pb-6 border-b border-(--border-subtle)">
               <div>
                 <span className="text-xs font-mono uppercase tracking-widest text-(--accent-primary) font-bold">
-                  WHY YOU'LL LOVE SKETCH
+                  WHY YOU'LL LOVE SKETCHH
                 </span>
                 <h2 className="text-3xl sm:text-4xl font-bold font-pencil text-(--text-primary) mt-1">
                   Built for how teams actually create
@@ -1127,7 +1127,7 @@ export const LandingPage: React.FC = () => {
             <div className="w-6 h-6 rounded bg-(--text-primary) text-(--bg-main) flex items-center justify-center font-bold text-xs">
               S
             </div>
-            <span className="font-bold text-(--text-primary)">SKETCH</span>
+            <span className="font-bold text-(--text-primary)">SKETCHH</span>
             <span className="text-(--border-strong)">|</span>
             <span>SIMPLE COLLABORATIVE WHITEBOARD</span>
           </div>
@@ -1142,7 +1142,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           <div>
-            <span>© 2026 SKETCH. ALL RIGHTS RESERVED.</span>
+            <span>© 2026 SKETCHH. ALL RIGHTS RESERVED.</span>
           </div>
         </div>
       </footer>
