@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+
+# Production & Build Outputs
+dist/
+dist-ssr/
+
+# TypeScript Build Info
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# Editor & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
