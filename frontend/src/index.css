@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* LIGHT MODE: Architectural Blueprint & Coolors Palette */
+    /* Based on user palette: #153446, #231a60, #445c9b, #225a7b, #064d91 */
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-pencil: 'Architects Daughter', 'Kalam', cursive;
+    --font-sketch: 'Architects Daughter', cursive;
+
+    --bg-main: #F4F7FB;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #EAF0F8;
+    --bg-surface-translucent: rgba(255, 255, 255, 0.94);
+    --border-subtle: rgba(21, 52, 70, 0.12);
+    --border-strong: rgba(21, 52, 70, 0.28);
+    --border-focus: #064D91;
+
+    --text-primary: #153446;
+    --text-secondary: #225A7B;
+    --text-muted: #57778E;
+
+    --accent-primary: #064D91;
+    --accent-secondary: #445C9B;
+    --accent-indigo: #231A60;
+    --accent-glow: rgba(6, 77, 145, 0.2);
+
+    --canvas-bg: #F0F4FA;
+    --canvas-grid: rgba(34, 90, 123, 0.14);
+    --canvas-line: rgba(34, 90, 123, 0.08);
+
+    --panel-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 18px -2px rgba(21, 52, 70, 0.1);
+  }
+
+  .dark {
+    /* DARK MODE: Cosmic Obsidian / Tactical Drafting Slate */
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+    --font-pencil: 'Architects Daughter', 'Kalam', cursive;
+    --font-sketch: 'Architects Daughter', cursive;
+
+    --bg-main: #070913;
+    --bg-surface: #0E1120;
+    --bg-surface-elevated: #161A2E;
+    --bg-surface-translucent: rgba(14, 17, 32, 0.92);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --border-focus: #6366F1;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+
+    --accent-primary: #6366F1;
+    --accent-secondary: #38BDF8;
+    --accent-indigo: #4F46E5;
+    --accent-glow: rgba(99, 102, 241, 0.32);
+
+    --canvas-bg: #090B16;
+    --canvas-grid: rgba(255, 255, 255, 0.06);
+    --canvas-line: rgba(255, 255, 255, 0.04);
+
+    --panel-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 8px 32px -4px rgba(0, 0, 0, 0.7);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Pencil Handwriting Font Classes */
+.font-pencil {
+  font-family: var(--font-pencil);
+}
+.font-sketch {
+  font-family: var(--font-sketch);
+}
+.font-mono-draft {
+  font-family: var(--font-mono);
+}
+
+/* Mechanical Drafting Button Styles */
+.draft-btn {
+  font-family: var(--font-mono);
+  transition: all 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.draft-btn:active {
+  transform: translateY(1px);
+}
+
+/* Drafting Masking Tape Corner Accents */
+.drafting-tape-tl {
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 50px;
+  height: 18px;
+  background: rgba(235, 222, 190, 0.65);
+  transform: rotate(-4deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px dashed rgba(180, 160, 120, 0.4);
+  pointer-events: none;
+  z-index: 10;
+}
+.dark .drafting-tape-tl {
+  background: rgba(140, 150, 180, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.drafting-tape-tr {
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  width: 50px;
+  height: 18px;
+  background: rgba(235, 222, 190, 0.65);
+  transform: rotate(5deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px dashed rgba(180, 160, 120, 0.4);
+  pointer-events: none;
+  z-index: 10;
+}
+.dark .drafting-tape-tr {
+  background: rgba(140, 150, 180, 0.25);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Architectural Ruler Tick Background Pattern */
+.ruler-ticks-top {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--border-strong) 0px,
+    var(--border-strong) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+.ruler-ticks-left {
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--border-strong) 0px,
+    var(--border-strong) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+/* Custom technical scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+}
+
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg-main), 0 0 0 4px var(--border-focus);
+}
