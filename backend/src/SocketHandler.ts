@@ -154,6 +154,8 @@ export function setupSocketIO(server: http.Server, sessionMiddleware: any): Serv
 
     // Handle cursor movement broadcast
     socket.on("cursor-move", ({ drawingId, x, y }: { drawingId: string; x: number; y: number }) => {
+      if (!socket.data.drawingId || socket.data.drawingId !== drawingId) return;
+
       socket.to(drawingId).emit("user-cursor", {
         userId,
         username: user.username,
@@ -176,6 +178,12 @@ export function setupSocketIO(server: http.Server, sessionMiddleware: any): Serv
         elements: any[];
         revision: number;
       }) => {
+        // Enforce that user can only update the drawing room they were authorized to join
+        if (!socket.data.drawingId || socket.data.drawingId !== drawingId) {
+          socket.emit("error-message", { message: "Unauthorized drawing room update" });
+          return;
+        }
+
         if (socket.data.role === "viewer") {
           socket.emit("error-message", { message: "Viewers cannot modify drawings" });
           return;
@@ -195,6 +203,10 @@ export function setupSocketIO(server: http.Server, sessionMiddleware: any): Serv
 
     // Handle drawing clear
     socket.on("canvas-clear", ({ drawingId }: { drawingId: string }) => {
+      if (!socket.data.drawingId || socket.data.drawingId !== drawingId) {
+        return;
+      }
+
       if (socket.data.role === "viewer") {
         socket.emit("error-message", { message: "Viewers cannot clear drawings" });
         return;
@@ -207,6 +219,7 @@ export function setupSocketIO(server: http.Server, sessionMiddleware: any): Serv
 
     // Handle explicit drawing save
     socket.on("save-drawing", async ({ drawingId }: { drawingId: string }) => {
+      if (!socket.data.drawingId || socket.data.drawingId !== drawingId) return;
       if (socket.data.role === "viewer") return;
       await flushAutoSave(drawingId);
     });
