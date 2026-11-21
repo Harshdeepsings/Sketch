@@ -39,7 +39,7 @@ const DockItem: React.FC<DockItemProps> = ({
       ref={itemRef}
       style={{ width, height: width }}
       onClick={onClick}
-      className={`group relative flex items-center justify-center rounded-xl border transition-colors select-none ${
+      className={`group relative flex items-center justify-center rounded-xl border transition-colors select-none shrink-0 ${
         isActive
           ? "bg-(--accent-primary) text-white border-(--accent-primary) shadow-lg shadow-(--accent-glow)"
           : "bg-(--bg-surface) text-(--text-secondary) border-(--border-strong) hover:text-(--text-primary) hover:border-(--accent-primary)"
@@ -84,7 +84,7 @@ export const DraftingDock: React.FC<DraftingDockProps> = ({
     <motion.div
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
-      className={`flex items-end gap-2.5 p-2 rounded-2xl bg-(--bg-surface-translucent) backdrop-blur-xl border-2 border-(--border-strong) shadow-2xl ${className}`}
+      className={`flex items-end gap-1.5 sm:gap-2.5 p-1.5 sm:p-2 rounded-2xl bg-(--bg-surface-translucent) backdrop-blur-xl border-2 border-(--border-strong) shadow-2xl max-w-full overflow-x-auto touch-pan-x ${className}`}
     >
       {tools.map((t) => (
         <DockItem

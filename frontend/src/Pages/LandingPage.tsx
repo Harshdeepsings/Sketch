@@ -521,9 +521,9 @@ export const LandingPage: React.FC = () => {
     return visited;
   };
 
-  // Mouse Down: Cursor Hold on Shape to Move OR Start Drawing New Element
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const coords = toWorldCoords(e.clientX, e.clientY);
+  // Start interaction (Mouse down or Touch start)
+  const startInteraction = useCallback((clientX: number, clientY: number) => {
+    const coords = toWorldCoords(clientX, clientY);
     lastMouseWorldPosRef.current = coords;
 
     // Check if clicking directly on an existing shape
@@ -596,11 +596,11 @@ export const LandingPage: React.FC = () => {
       currentDraftRef.current = draft;
     }
     redraw();
-  };
+  }, [toWorldCoords, getElementAtPosition, elements, selectedElementId, activeTool, doodleColor, leadWidth, redraw]);
 
-  // Mouse Move: Drag Shape across Canvas OR Live Draw Preview
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const coords = toWorldCoords(e.clientX, e.clientY);
+  // Move interaction (Mouse move or Touch move)
+  const moveInteraction = useCallback((clientX: number, clientY: number) => {
+    const coords = toWorldCoords(clientX, clientY);
 
     // 1. Moving connected shapes on cursor hold (Real-time delta update)
     if (isDraggingShapeRef.current && draggedElementIdRef.current && lastMouseWorldPosRef.current) {
@@ -660,10 +660,10 @@ export const LandingPage: React.FC = () => {
     // 3. Passive hover detection: set grab cursor if hovering over an existing shape
     const hit = getElementAtPosition(coords, elements);
     setIsHoveringShape(Boolean(hit));
-  };
+  }, [toWorldCoords, elements, activeTool, requestRedraw, getElementAtPosition]);
 
-  // Mouse Up: Commit Moved Shape OR Commit Drawn Shape
-  const handleMouseUp = () => {
+  // End interaction (Mouse up or Touch end)
+  const endInteraction = useCallback(() => {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -695,7 +695,113 @@ export const LandingPage: React.FC = () => {
     currentDraftRef.current = null;
     startPosRef.current = null;
     redraw();
+  }, [redraw]);
+
+  // Mouse Down
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    startInteraction(e.clientX, e.clientY);
   };
+
+  // Mouse Move
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    moveInteraction(e.clientX, e.clientY);
+  };
+
+  // Mouse Up
+  const handleMouseUp = () => {
+    endInteraction();
+  };
+
+  // Native Touch Listeners on Dummy Canvas ({ passive: false })
+  // Completely prevents mobile browser from scrolling mistakenly when user draws or moves shapes on canvas
+  useEffect(() => {
+    const canvas = miniCanvasRef.current;
+    if (!canvas) return;
+
+    let touchStartDist = 0;
+    let initialZoom = 1;
+    let initialPan = { x: 0, y: 0 };
+    let initialMidpoint = { x: 0, y: 0 };
+
+    const onTouchStart = (e: TouchEvent) => {
+      // Prevent browser default scroll/zoom gesture on canvas
+      e.preventDefault();
+
+      if (e.touches.length === 1) {
+        const touch = e.touches[0]!;
+        startInteraction(touch.clientX, touch.clientY);
+      } else if (e.touches.length === 2) {
+        // Multi-touch pinch-to-zoom & two-finger pan on mobile
+        if (isDoodlingRef.current) {
+          isDoodlingRef.current = false;
+          currentDraftRef.current = null;
+          redraw();
+        }
+        const t1 = e.touches[0]!;
+        const t2 = e.touches[1]!;
+        touchStartDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        initialZoom = zoom;
+        initialPan = { ...pan };
+        initialMidpoint = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2,
+        };
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault(); // Stop mobile browser scrolling mistakenly while drawing
+
+      if (e.touches.length === 1) {
+        const touch = e.touches[0]!;
+        moveInteraction(touch.clientX, touch.clientY);
+      } else if (e.touches.length === 2 && touchStartDist > 0) {
+        const t1 = e.touches[0]!;
+        const t2 = e.touches[1]!;
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const scale = dist / touchStartDist;
+        const newZoom = Math.min(Math.max(0.4, Number((initialZoom * scale).toFixed(2))), 4.0);
+
+        const currentMid = {
+          x: (t1.clientX + t2.clientX) / 2,
+          y: (t1.clientY + t2.clientY) / 2,
+        };
+        const dx = currentMid.x - initialMidpoint.x;
+        const dy = currentMid.y - initialMidpoint.y;
+
+        setZoom(newZoom);
+        setPan({
+          x: initialPan.x + dx,
+          y: initialPan.y + dy,
+        });
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 0) {
+        endInteraction();
+        touchStartDist = 0;
+      }
+    };
+
+    const onTouchCancel = () => {
+      endInteraction();
+      touchStartDist = 0;
+    };
+
+    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
+    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
+    canvas.addEventListener("touchcancel", onTouchCancel, { passive: false });
+
+    return () => {
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchmove", onTouchMove);
+      canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchCancel);
+    };
+  }, [startInteraction, moveInteraction, endInteraction, zoom, pan, redraw]);
 
   // Reset scratchpad
   const clearMiniScratchpad = () => {
@@ -874,16 +980,16 @@ export const LandingPage: React.FC = () => {
 
             {/* Draggable Note */}
             <motion.div
-              drag
+              drag={typeof window !== "undefined" && window.innerWidth >= 768 ? true : false}
               dragConstraints={{ left: -30, right: 100, top: -40, bottom: 60 }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="p-4 rounded-xl border-2 border-amber-400/40 bg-amber-50 dark:bg-amber-950/20 shadow-md cursor-grab active:cursor-grabbing max-w-sm relative select-none"
+              className="p-4 rounded-xl border-2 border-amber-400/40 bg-amber-50 dark:bg-amber-950/20 shadow-md md:cursor-grab md:active:cursor-grabbing max-w-sm relative select-none touch-pan-y"
             >
               <div className="drafting-tape-tl" />
               <div className="text-[10px] font-mono font-bold text-amber-700 dark:text-amber-400 uppercase mb-1 flex items-center justify-between">
                 <span>HANDY NOTE</span>
-                <span className="text-[9px] opacity-70">DRAG ME</span>
+                <span className="text-[9px] opacity-70 hidden md:inline">DRAG ME</span>
               </div>
               <p className="text-xs font-pencil text-amber-900 dark:text-amber-200 leading-snug">
                 "Instant, lightweight, and clutter-free. Feels like a real whiteboard on your wall, but connected to your entire team."
@@ -892,7 +998,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* RIGHT WING: The Solid Static Interactive Blueprint Workbench */}
-          <div className="lg:col-span-7 flex flex-col items-center">
+          <div className="lg:col-span-7 flex flex-col items-center w-full">
             {/* 100% Solid Static Board Container */}
             <div className="w-full rounded-2xl border-2 border-(--border-strong) bg-(--bg-surface) shadow-2xl relative overflow-hidden transition-all">
               {/* Physical Drafting Tape in Corners */}
@@ -900,15 +1006,16 @@ export const LandingPage: React.FC = () => {
               <div className="drafting-tape-tr" />
 
               {/* Blueprint Sheet Top Bar with Live Zoom Indicator */}
-              <div className="h-10 border-b border-(--border-subtle) bg-(--bg-surface-elevated) px-4 flex items-center justify-between text-xs font-mono select-none">
-                <div className="flex items-center gap-3">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-(--accent-primary)" />
-                  <span className="font-semibold text-(--text-primary)">
-                    Interactive Canvas Preview
+              <div className="h-10 border-b border-(--border-subtle) bg-(--bg-surface-elevated) px-3 sm:px-4 flex items-center justify-between text-xs font-mono select-none overflow-hidden">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <span className="w-2.5 h-2.5 rounded-sm bg-(--accent-primary) shrink-0" />
+                  <span className="font-semibold text-(--text-primary) truncate text-[11px] sm:text-xs">
+                    <span className="hidden sm:inline">Interactive Canvas Preview</span>
+                    <span className="sm:hidden">Canvas Preview</span>
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   {/* Zoom Controls */}
                   <div className="flex items-center bg-(--bg-surface) border border-(--border-subtle) rounded px-1.5 py-0.5 gap-1 text-[10px]">
                     <button
@@ -938,7 +1045,7 @@ export const LandingPage: React.FC = () => {
                   </div>
 
                   {/* Active Tool Badge */}
-                  <span className="text-[10px] font-mono font-bold text-(--accent-primary) bg-(--bg-surface) px-2 py-0.5 rounded border border-(--border-subtle) uppercase">
+                  <span className="hidden md:inline-block text-[10px] font-mono font-bold text-(--accent-primary) bg-(--bg-surface) px-2 py-0.5 rounded border border-(--border-subtle) uppercase">
                     TOOL: {activeTool === "select" ? "SELECT / MOVE" : activeTool.toUpperCase()}
                   </span>
 
@@ -947,10 +1054,10 @@ export const LandingPage: React.FC = () => {
                     type="button"
                     onClick={clearMiniScratchpad}
                     title="Reset Preview"
-                    className="flex items-center gap-1 px-2 py-1 rounded text-[11px] font-mono text-(--text-muted) hover:text-rose-500 hover:bg-rose-500/10 border border-(--border-subtle) transition-colors"
+                    className="flex items-center gap-1 px-1.5 sm:px-2 py-1 rounded text-[10px] sm:text-[11px] font-mono text-(--text-muted) hover:text-rose-500 hover:bg-rose-500/10 border border-(--border-subtle) transition-colors"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    <span>Reset</span>
+                    <span className="hidden sm:inline">Reset</span>
                   </button>
                 </div>
               </div>
@@ -958,7 +1065,8 @@ export const LandingPage: React.FC = () => {
               {/* Interactive Drawing Canvas (Accurate Coordinates + Zoom Supported + Movable Shapes on Cursor Hold) */}
               <div
                 ref={canvasContainerRef}
-                className="relative w-full h-80 sm:h-96 bg-(--canvas-bg) overflow-hidden select-none"
+                className="relative w-full h-80 sm:h-96 bg-(--canvas-bg) overflow-hidden select-none touch-none"
+                style={{ touchAction: "none" }}
               >
                 <canvas
                   ref={miniCanvasRef}
@@ -966,20 +1074,8 @@ export const LandingPage: React.FC = () => {
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
-                  onTouchStart={(e) => {
-                    if (e.touches.length === 1) {
-                      const t = e.touches[0];
-                      handleMouseDown({ clientX: t.clientX, clientY: t.clientY } as any);
-                    }
-                  }}
-                  onTouchMove={(e) => {
-                    if (e.touches.length === 1) {
-                      const t = e.touches[0];
-                      handleMouseMove({ clientX: t.clientX, clientY: t.clientY } as any);
-                    }
-                  }}
-                  onTouchEnd={handleMouseUp}
                   style={{
+                    touchAction: "none",
                     cursor: isDraggingShapeRef.current
                       ? "grabbing"
                       : isHoveringShape && selectedElementId
@@ -990,7 +1086,7 @@ export const LandingPage: React.FC = () => {
                       ? "default"
                       : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M12 2v7m0 6v7M2 12h7m6 0h7' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-opacity='0.35'/%3E%3Cpath d='M12 3v6m0 6v6M3 12h6m6 0h6' stroke='%236366F1' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='12' r='1.5' fill='%236366F1' stroke='%23FFFFFF' stroke-width='0.75'/%3E%3C/svg%3E") 12 12, crosshair`,
                   }}
-                  className="w-full h-full block"
+                  className="w-full h-full block touch-none"
                 />
 
                 {/* Title Block Box in Bottom Right */}
@@ -1004,18 +1100,18 @@ export const LandingPage: React.FC = () => {
               </div>
 
               {/* Footing Bar with Dynamic Action Hints */}
-              <div className="h-8 border-t border-(--border-subtle) bg-(--bg-surface-elevated) px-4 flex items-center justify-between text-[11px] font-mono text-(--text-muted)">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>
+              <div className="h-8 border-t border-(--border-subtle) bg-(--bg-surface-elevated) px-3 sm:px-4 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-(--text-muted)">
+                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 mr-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="truncate">
                     {isDraggingShapeRef.current
                       ? "Moving shape... release cursor to place"
                       : selectedElementId
-                      ? "Tap empty canvas to place as static, or drag to move"
+                      ? "Tap empty canvas to place, or drag"
                       : isHoveringShape
                       ? "Tap shape to select & move"
                       : activeTool === "select"
-                      ? "Tap any shape to move, or choose a drawing tool"
+                      ? "Tap any shape to move, or choose a tool"
                       : activeTool === "rect"
                       ? "Rectangle tool: drag to draw"
                       : activeTool === "circle"
@@ -1025,7 +1121,7 @@ export const LandingPage: React.FC = () => {
                 </div>
                 <Link
                   to={user ? "/dashboard" : "/signup"}
-                  className="text-(--accent-primary) hover:underline font-semibold flex items-center gap-1"
+                  className="text-(--accent-primary) hover:underline font-semibold flex items-center gap-1 shrink-0"
                 >
                   <span>Full Canvas</span>
                   <Maximize2 className="w-3 h-3" />

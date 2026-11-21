@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               S
             </div>
             <span className="font-bold text-lg tracking-tight text-(--text-primary) font-pencil">
-              Sketch
+              Sketchh
             </span>
             <span className="text-[10px] font-mono text-(--text-muted) px-1.5 py-0.5 rounded border border-(--border-subtle) bg-(--bg-surface-elevated) hidden sm:inline">
               STUDIO
