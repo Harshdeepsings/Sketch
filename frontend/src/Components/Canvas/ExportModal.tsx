@@ -69,19 +69,19 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in select-none">
-      <div className="w-full max-w-sm rounded-xl bg-[var(--bg-surface)] border border-[var(--border-strong)] shadow-2xl p-5 relative">
+      <div className="w-full max-w-sm rounded-xl bg-(--bg-surface) border border-(--border-strong) shadow-2xl p-5 relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] transition-colors"
+          className="absolute top-4 right-4 p-1 rounded text-(--text-muted) hover:text-(--text-primary) hover:bg-(--border-subtle) transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="mb-4">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--accent-primary)] font-semibold">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-(--accent-primary) font-semibold">
             OUTPUT SPEC
           </span>
-          <h3 className="text-base font-bold text-[var(--text-primary)]">
+          <h3 className="text-base font-bold text-(--text-primary)">
             Export Drawing
           </h3>
         </div>
@@ -93,13 +93,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             onClick={() => setFormat("png")}
             className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all ${
               format === "png"
-                ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-semibold"
-                : "border-[var(--border-subtle)] hover:bg-[var(--border-subtle)] text-[var(--text-secondary)]"
+                ? "border-(--accent-primary) bg-(--accent-primary)/10 text-(--accent-primary) font-semibold"
+                : "border-(--border-subtle) hover:bg-(--border-subtle) text-(--text-secondary)"
             }`}
           >
             <FileImage className="w-4 h-4 mb-1" />
             <span className="text-xs">PNG</span>
-            <span className="text-[9px] text-[var(--text-muted)]">Raster</span>
+            <span className="text-[9px] text-(--text-muted)">Raster</span>
           </button>
 
           <button
@@ -107,13 +107,13 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             onClick={() => setFormat("svg")}
             className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all ${
               format === "svg"
-                ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-semibold"
-                : "border-[var(--border-subtle)] hover:bg-[var(--border-subtle)] text-[var(--text-secondary)]"
+                ? "border-(--accent-primary) bg-(--accent-primary)/10 text-(--accent-primary) font-semibold"
+                : "border-(--border-subtle) hover:bg-(--border-subtle) text-(--text-secondary)"
             }`}
           >
             <Code className="w-4 h-4 mb-1" />
             <span className="text-xs">SVG</span>
-            <span className="text-[9px] text-[var(--text-muted)]">Vector</span>
+            <span className="text-[9px] text-(--text-muted)">Vector</span>
           </button>
 
           <button
@@ -121,34 +121,34 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             onClick={() => setFormat("pdf")}
             className={`flex flex-col items-center justify-center p-2.5 rounded-lg border transition-all ${
               format === "pdf"
-                ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]/10 text-[var(--accent-primary)] font-semibold"
-                : "border-[var(--border-subtle)] hover:bg-[var(--border-subtle)] text-[var(--text-secondary)]"
+                ? "border-(--accent-primary) bg-(--accent-primary)/10 text-(--accent-primary) font-semibold"
+                : "border-(--border-subtle) hover:bg-(--border-subtle) text-(--text-secondary)"
             }`}
           >
             <FileText className="w-4 h-4 mb-1" />
             <span className="text-xs">PDF</span>
-            <span className="text-[9px] text-[var(--text-muted)]">Document</span>
+            <span className="text-[9px] text-(--text-muted)">Document</span>
           </button>
         </div>
 
         {/* Options Form */}
         <div className="space-y-3 mb-5 font-mono">
           <div>
-            <label className="text-[10px] uppercase text-[var(--text-muted)] block mb-1">
+            <label className="text-[10px] uppercase text-(--text-muted) block mb-1">
               File Name
             </label>
             <input
               type="text"
               value={filename}
               onChange={(e) => setFilename(e.target.value)}
-              className="w-full bg-[var(--bg-surface-elevated)] border border-[var(--border-strong)] rounded px-2.5 py-1.5 text-xs text-[var(--text-primary)] focus-ring"
+              className="w-full bg-(--bg-surface-elevated) border border-(--border-strong) rounded px-2.5 py-1.5 text-xs text-(--text-primary) focus-ring"
               placeholder="drawing-title"
             />
           </div>
 
           {format === "png" && (
             <div>
-              <label className="text-[10px] uppercase text-[var(--text-muted)] block mb-1">
+              <label className="text-[10px] uppercase text-(--text-muted) block mb-1">
                 Resolution Factor
               </label>
               <div className="grid grid-cols-3 gap-1.5">
@@ -159,8 +159,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                     onClick={() => setScale(s)}
                     className={`py-1 rounded text-[11px] border transition-all ${
                       scale === s
-                        ? "border-[var(--accent-primary)] bg-[var(--accent-primary)] text-white font-semibold"
-                        : "border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--border-subtle)]"
+                        ? "border-(--accent-primary) bg-(--accent-primary) text-white font-semibold"
+                        : "border-(--border-subtle) text-(--text-secondary) hover:bg-(--border-subtle)"
                     }`}
                   >
                     {s}x {s === 2 && "(Retina)"}
@@ -176,9 +176,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 type="checkbox"
                 checked={transparentBg}
                 onChange={(e) => setTransparentBg(e.target.checked)}
-                className="w-3.5 h-3.5 rounded text-[var(--accent-primary)]"
+                className="w-3.5 h-3.5 rounded text-(--accent-primary)"
               />
-              <span className="text-xs text-[var(--text-secondary)]">
+              <span className="text-xs text-(--text-secondary)">
                 Transparent background
               </span>
             </label>
@@ -186,7 +186,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-(--border-subtle)">
           <Button variant="ghost" size="sm" onClick={onClose}>
             Cancel
           </Button>

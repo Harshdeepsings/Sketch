@@ -345,26 +345,26 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-2xl rounded-3xl bg-[var(--bg-surface)] border border-[var(--border-strong)] shadow-2xl p-6 relative max-h-[85vh] flex flex-col">
+      <div className="w-full max-w-2xl rounded-3xl bg-(--bg-surface) border border-(--border-strong) shadow-2xl p-6 relative max-h-[85vh] flex flex-col">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-1 rounded-full text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] transition-colors"
+          className="absolute top-5 right-5 p-1 rounded-full text-(--text-muted) hover:text-(--text-primary) hover:bg-(--border-subtle) transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="w-5 h-5 text-[var(--accent-primary)]" />
-          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          <Sparkles className="w-5 h-5 text-(--accent-primary)" />
+          <h3 className="text-lg font-semibold text-(--text-primary)">
             Component Library & Templates
           </h3>
         </div>
-        <p className="text-xs text-[var(--text-muted)] mb-5">
+        <p className="text-xs text-(--text-muted) mb-5">
           Insert pre-crafted architecture nodes, flowchart blocks, and wireframes into your canvas.
         </p>
 
         {/* Categories Bar */}
-        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-[var(--bg-surface-elevated)] border border-[var(--border-subtle)] text-xs mb-5 overflow-x-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-(--bg-surface-elevated) border border-(--border-subtle) text-xs mb-5 overflow-x-auto">
           {[
             { id: "all", label: "All Items" },
             { id: "architecture", label: "Architecture" },
@@ -377,8 +377,8 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
               onClick={() => setSelectedCategory(cat.id as any)}
               className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
                 selectedCategory === cat.id
-                  ? "bg-[var(--bg-surface)] text-[var(--text-primary)] font-semibold shadow-sm"
-                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  ? "bg-(--bg-surface) text-(--text-primary) font-semibold shadow-sm"
+                  : "text-(--text-muted) hover:text-(--text-primary)"
               }`}
             >
               {cat.label}
@@ -392,20 +392,20 @@ export const LibraryModal: React.FC<LibraryModalProps> = ({
             <div
               key={item.id}
               onClick={() => handleSelect(item)}
-              className="group p-4 rounded-2xl border border-[var(--border-subtle)] hover:border-[var(--accent-primary)]/50 bg-[var(--bg-surface-elevated)]/40 hover:bg-[var(--bg-surface-elevated)] transition-all cursor-pointer flex items-start gap-3.5"
+              className="group p-4 rounded-2xl border border-(--border-subtle) hover:border-(--accent-primary)/50 bg-(--bg-surface-elevated)/40 hover:bg-(--bg-surface-elevated) transition-all cursor-pointer flex items-start gap-3.5"
             >
-              <div className="p-2.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] group-hover:scale-105 transition-transform">
+              <div className="p-2.5 rounded-xl bg-(--bg-surface) border border-(--border-subtle) group-hover:scale-105 transition-transform">
                 {item.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-xs font-semibold text-[var(--text-primary)] mb-0.5 group-hover:text-[var(--accent-primary)] transition-colors">
+                <h4 className="text-xs font-semibold text-(--text-primary) mb-0.5 group-hover:text-(--accent-primary) transition-colors">
                   {item.name}
                 </h4>
-                <p className="text-[11px] text-[var(--text-muted)] line-clamp-2">
+                <p className="text-[11px] text-(--text-muted) line-clamp-2">
                   {item.description}
                 </p>
               </div>
-              <Plus className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--accent-primary)] mt-1" />
+              <Plus className="w-4 h-4 text-(--text-muted) group-hover:text-(--accent-primary) mt-1" />
             </div>
           ))}
         </div>

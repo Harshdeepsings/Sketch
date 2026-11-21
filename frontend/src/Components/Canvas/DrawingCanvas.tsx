@@ -590,7 +590,7 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
   return (
     <div
-      className="relative w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-[var(--canvas-bg)] select-none"
+      className="relative w-full h-[calc(100vh-3.5rem)] overflow-hidden bg-(--canvas-bg) select-none"
       style={{
         cursor: getCanvasCursor(),
       }}
@@ -1048,24 +1048,24 @@ export const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       </Stage>
 
       {/* Architectural Viewport Top Ruler */}
-      <div className="absolute top-0 left-0 right-0 h-4 bg-[var(--bg-surface-elevated)] border-b border-[var(--border-subtle)] z-10 pointer-events-none select-none overflow-hidden opacity-60">
+      <div className="absolute top-0 left-0 right-0 h-4 bg-(--bg-surface-elevated) border-b border-(--border-subtle) z-10 pointer-events-none select-none overflow-hidden opacity-60">
         <div className="w-full h-full ruler-ticks-top" />
       </div>
 
       {/* Architectural Viewport Left Ruler */}
-      <div className="absolute top-4 left-0 bottom-0 w-4 bg-[var(--bg-surface-elevated)] border-r border-[var(--border-subtle)] z-10 pointer-events-none select-none overflow-hidden opacity-60">
+      <div className="absolute top-4 left-0 bottom-0 w-4 bg-(--bg-surface-elevated) border-r border-(--border-subtle) z-10 pointer-events-none select-none overflow-hidden opacity-60">
         <div className="w-full h-full ruler-ticks-left" />
       </div>
 
       {/* Drafting HUD Overlay */}
-      <div className="absolute bottom-5 left-7 z-20 pointer-events-none px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-strong)] text-[11px] font-mono text-[var(--text-muted)] flex items-center gap-3 shadow-md select-none">
+      <div className="absolute bottom-5 left-7 z-20 pointer-events-none px-3 py-1.5 rounded-lg bg-(--bg-surface) border border-(--border-strong) text-[11px] font-mono text-(--text-muted) flex items-center gap-3 shadow-md select-none">
         <span className="flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span>X: <strong ref={hudXRef} className="text-[var(--text-primary)]">0</strong></span>
+          <span>X: <strong ref={hudXRef} className="text-(--text-primary)">0</strong></span>
         </span>
-        <span>Y: <strong ref={hudYRef} className="text-[var(--text-primary)]">0</strong></span>
-        <span>ZOOM: <strong className="text-[var(--text-primary)]">{Math.round(scale * 100)}%</strong></span>
-        <span>ITEMS: <strong className="text-[var(--text-primary)]">{elements.length}</strong></span>
+        <span>Y: <strong ref={hudYRef} className="text-(--text-primary)">0</strong></span>
+        <span>ZOOM: <strong className="text-(--text-primary)">{Math.round(scale * 100)}%</strong></span>
+        <span>ITEMS: <strong className="text-(--text-primary)">{elements.length}</strong></span>
       </div>
 
       {/* Transparent Inline Text Editor Overlay */}

@@ -41,8 +41,8 @@ const DockItem: React.FC<DockItemProps> = ({
       onClick={onClick}
       className={`group relative flex items-center justify-center rounded-xl border transition-colors select-none ${
         isActive
-          ? "bg-[var(--accent-primary)] text-white border-[var(--accent-primary)] shadow-lg shadow-[var(--accent-glow)]"
-          : "bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-strong)] hover:text-[var(--text-primary)] hover:border-[var(--accent-primary)]"
+          ? "bg-(--accent-primary) text-white border-(--accent-primary) shadow-lg shadow-(--accent-glow)"
+          : "bg-(--bg-surface) text-(--text-secondary) border-(--border-strong) hover:text-(--text-primary) hover:border-(--accent-primary)"
       }`}
     >
       <div className="flex items-center justify-center scale-100 group-hover:scale-110 transition-transform">
@@ -50,9 +50,9 @@ const DockItem: React.FC<DockItemProps> = ({
       </div>
 
       {/* Floating Tooltip */}
-      <div className="absolute -top-11 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-[var(--bg-surface-elevated)] border border-[var(--border-strong)] text-[10px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-30">
-        <div className="font-bold text-[var(--text-primary)]">{label}</div>
-        <div className="text-[9px] text-[var(--text-muted)]">{sublabel}</div>
+      <div className="absolute -top-11 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-md bg-(--bg-surface-elevated) border border-(--border-strong) text-[10px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg z-30">
+        <div className="font-bold text-(--text-primary)">{label}</div>
+        <div className="text-[9px] text-(--text-muted)">{sublabel}</div>
       </div>
     </motion.button>
   );
@@ -84,7 +84,7 @@ export const DraftingDock: React.FC<DraftingDockProps> = ({
     <motion.div
       onMouseMove={(e) => mouseX.set(e.pageX)}
       onMouseLeave={() => mouseX.set(Infinity)}
-      className={`flex items-end gap-2.5 p-2 rounded-2xl bg-[var(--bg-surface-translucent)] backdrop-blur-xl border-2 border-[var(--border-strong)] shadow-2xl ${className}`}
+      className={`flex items-end gap-2.5 p-2 rounded-2xl bg-(--bg-surface-translucent) backdrop-blur-xl border-2 border-(--border-strong) shadow-2xl ${className}`}
     >
       {tools.map((t) => (
         <DockItem

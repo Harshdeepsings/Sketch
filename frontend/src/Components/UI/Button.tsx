@@ -30,17 +30,17 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      "bg-[var(--accent-primary)] hover:opacity-95 text-white font-mono shadow-sm border border-[var(--accent-primary)] shadow-[var(--accent-glow)] tracking-tight",
+      "bg-(--accent-primary) hover:opacity-95 text-white font-mono shadow-sm border border-(--accent-primary) shadow-(--accent-glow) tracking-tight",
     secondary:
-      "bg-[var(--bg-surface-elevated)] hover:bg-[var(--border-subtle)] text-[var(--text-primary)] font-mono border border-[var(--border-strong)]",
+      "bg-(--bg-surface-elevated) hover:bg-(--border-subtle) text-(--text-primary) font-mono border border-(--border-strong)",
     outline:
-      "bg-transparent hover:bg-[var(--border-subtle)] text-[var(--text-primary)] font-mono border border-[var(--border-strong)] shadow-sm",
+      "bg-transparent hover:bg-(--border-subtle) text-(--text-primary) font-mono border border-(--border-strong) shadow-sm",
     ghost:
-      "bg-transparent hover:bg-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-mono border border-transparent",
+      "bg-transparent hover:bg-(--border-subtle) text-(--text-secondary) hover:text-(--text-primary) font-mono border border-transparent",
     danger:
       "bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-mono border border-rose-500/30",
     sketch:
-      "bg-[var(--bg-surface)] hover:bg-[var(--bg-surface-elevated)] text-[var(--text-primary)] font-pencil text-base border-2 border-dashed border-[var(--border-strong)] shadow-sm hover:border-[var(--accent-primary)]",
+      "bg-(--bg-surface) hover:bg-(--bg-surface-elevated) text-(--text-primary) font-pencil text-base border-2 border-dashed border-(--border-strong) shadow-sm hover:border-(--accent-primary)",
   };
 
   return (

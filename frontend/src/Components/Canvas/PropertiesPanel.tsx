@@ -74,10 +74,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const strokeWidths = [1, 2, 4, 8];
 
   return (
-    <div className="fixed top-18 left-5 z-20 w-60 p-3 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-strong)] shadow-xl backdrop-blur-md transition-all select-none flex flex-col gap-3">
+    <div className="fixed top-18 left-5 z-20 w-60 p-3 rounded-xl bg-(--bg-surface) border border-(--border-strong) shadow-xl backdrop-blur-md transition-all select-none flex flex-col gap-3">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
-        <span className="text-[11px] font-mono font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+      <div className="flex items-center justify-between border-b border-(--border-subtle) pb-2">
+        <span className="text-[11px] font-mono font-semibold text-(--text-primary) uppercase tracking-wider">
           Properties {selectedElements.length > 1 && `(${selectedElements.length})`}
         </span>
         <div className="flex items-center gap-0.5">
@@ -87,7 +87,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               className={`p-1 rounded transition-colors ${
                 isLocked
                   ? "text-amber-400 bg-amber-500/10"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)]"
+                  : "text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle)"
               }`}
               title={isLocked ? "Unlock selection" : "Lock selection"}
             >
@@ -98,7 +98,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           {selectedElements.length > 1 && (
             <button
               onClick={isGrouped ? onUngroup : onGroup}
-              className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] transition-colors"
+              className="p-1 rounded text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle) transition-colors"
               title={isGrouped ? "Ungroup elements" : "Group elements"}
             >
               {isGrouped ? <Ungroup className="w-3.5 h-3.5" /> : <Group className="w-3.5 h-3.5" />}
@@ -107,7 +107,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
           <button
             onClick={onDuplicate}
-            className="p-1 rounded text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] transition-colors"
+            className="p-1 rounded text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle) transition-colors"
             title="Duplicate (Ctrl+D)"
           >
             <Copy className="w-3.5 h-3.5" />
@@ -124,7 +124,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
       {/* Stroke Color */}
       <div>
-        <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1">
+        <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1">
           Stroke Color
         </label>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -134,7 +134,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               onClick={() => onUpdateElement({ stroke: c.value })}
               className={`w-4 h-4 rounded-full border border-black/10 transition-transform ${
                 currentStroke.toLowerCase() === c.value.toLowerCase()
-                  ? "scale-125 ring-2 ring-[var(--accent-primary)] ring-offset-1"
+                  ? "scale-125 ring-2 ring-(--accent-primary) ring-offset-1"
                   : "hover:scale-110"
               }`}
               style={{ backgroundColor: c.value }}
@@ -154,14 +154,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       {/* Fill Color */}
       {(first.type === "rect" || first.type === "circle") && (
         <div>
-          <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1">
+          <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1">
             Fill Color
           </label>
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => onUpdateElement({ fill: "transparent" })}
-              className={`w-4 h-4 rounded-full border border-[var(--border-strong)] flex items-center justify-center text-[9px] text-rose-500 font-bold ${
-                currentFill === "transparent" ? "ring-2 ring-[var(--accent-primary)] ring-offset-1" : ""
+              className={`w-4 h-4 rounded-full border border-(--border-strong) flex items-center justify-center text-[9px] text-rose-500 font-bold ${
+                currentFill === "transparent" ? "ring-2 ring-(--accent-primary) ring-offset-1" : ""
               }`}
               title="Transparent"
             >
@@ -173,7 +173,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 onClick={() => onUpdateElement({ fill: c.value })}
                 className={`w-4 h-4 rounded-full border border-black/10 transition-transform ${
                   currentFill.toLowerCase() === c.value.toLowerCase()
-                    ? "scale-125 ring-2 ring-[var(--accent-primary)] ring-offset-1"
+                    ? "scale-125 ring-2 ring-(--accent-primary) ring-offset-1"
                     : "hover:scale-110"
                 }`}
                 style={{ backgroundColor: c.value }}
@@ -195,7 +195,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       {first.type !== "text" && (
         <div className="space-y-2">
           <div>
-            <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1">
+            <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1">
               Stroke Width
             </label>
             <div className="flex items-center gap-1">
@@ -203,10 +203,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <button
                   key={w}
                   onClick={() => onUpdateElement({ strokeWidth: w })}
-                  className={`flex-1 py-0.5 rounded text-[11px] font-mono border border-[var(--border-subtle)] transition-colors ${
+                  className={`flex-1 py-0.5 rounded text-[11px] font-mono border border-(--border-subtle) transition-colors ${
                     currentStrokeWidth === w
-                      ? "bg-[var(--accent-primary)] text-white"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--border-subtle)]"
+                      ? "bg-(--accent-primary) text-white"
+                      : "text-(--text-secondary) hover:bg-(--border-subtle)"
                   }`}
                 >
                   {w}px
@@ -216,7 +216,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1">
+            <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1">
               Stroke Style
             </label>
             <div className="flex items-center gap-1">
@@ -224,10 +224,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <button
                   key={style}
                   onClick={() => onUpdateElement({ strokeStyle: style })}
-                  className={`flex-1 py-0.5 rounded text-[10px] font-mono capitalize border border-[var(--border-subtle)] transition-colors ${
+                  className={`flex-1 py-0.5 rounded text-[10px] font-mono capitalize border border-(--border-subtle) transition-colors ${
                     currentStrokeStyle === style
-                      ? "bg-[var(--accent-primary)] text-white"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--border-subtle)]"
+                      ? "bg-(--accent-primary) text-white"
+                      : "text-(--text-secondary) hover:bg-(--border-subtle)"
                   }`}
                 >
                   {style}
@@ -242,7 +242,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       {first.type === "text" && (
         <div className="space-y-2">
           <div>
-            <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1">
+            <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1">
               Typography Font
             </label>
             <div className="flex flex-col gap-1">
@@ -254,10 +254,10 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 <button
                   key={f.val}
                   onClick={() => onUpdateElement({ fontFamily: f.val })}
-                  className={`text-left px-2 py-1 rounded text-xs border border-[var(--border-subtle)] transition-colors ${
+                  className={`text-left px-2 py-1 rounded text-xs border border-(--border-subtle) transition-colors ${
                     (first.fontFamily || "'Architects Daughter', cursive") === f.val
-                      ? "bg-[var(--accent-primary)] text-white font-semibold"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--border-subtle)]"
+                      ? "bg-(--accent-primary) text-white font-semibold"
+                      : "text-(--text-secondary) hover:bg-(--border-subtle)"
                   } ${f.preview}`}
                 >
                   {f.label}
@@ -267,7 +267,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1">
+            <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1">
               Font Size ({first.fontSize || 20}px)
             </label>
             <input
@@ -277,7 +277,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
               step="2"
               value={first.fontSize || 20}
               onChange={(e) => onUpdateElement({ fontSize: Number(e.target.value) })}
-              className="w-full accent-[var(--accent-primary)]"
+              className="w-full accent-(--accent-primary)"
             />
           </div>
         </div>
@@ -286,8 +286,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       {/* Opacity */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="text-[10px] font-mono uppercase text-[var(--text-muted)]">Opacity</label>
-          <span className="text-[10px] text-[var(--text-secondary)] font-mono">{currentOpacity}%</span>
+          <label className="text-[10px] font-mono uppercase text-(--text-muted)">Opacity</label>
+          <span className="text-[10px] text-(--text-secondary) font-mono">{currentOpacity}%</span>
         </div>
         <input
           type="range"
@@ -296,41 +296,41 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           step="5"
           value={currentOpacity}
           onChange={(e) => onUpdateElement({ opacity: Number(e.target.value) / 100 })}
-          className="w-full accent-[var(--accent-primary)]"
+          className="w-full accent-(--accent-primary)"
         />
       </div>
 
       {/* Layer Order */}
-      <div className="border-t border-[var(--border-subtle)] pt-2">
-        <label className="text-[10px] font-mono uppercase text-[var(--text-muted)] block mb-1 flex items-center gap-1">
+      <div className="border-t border-(--border-subtle) pt-2">
+        <label className="text-[10px] font-mono uppercase text-(--text-muted) block mb-1 flex items-center gap-1">
           <Layers className="w-3 h-3" />
           <span>Layers</span>
         </label>
         <div className="grid grid-cols-4 gap-1">
           <button
             onClick={onBringToFront}
-            className="p-1 rounded border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] flex items-center justify-center transition-colors"
+            className="p-1 rounded border border-(--border-subtle) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle) flex items-center justify-center transition-colors"
             title="Bring to Front"
           >
             <ChevronsUp className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onBringForward}
-            className="p-1 rounded border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] flex items-center justify-center transition-colors"
+            className="p-1 rounded border border-(--border-subtle) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle) flex items-center justify-center transition-colors"
             title="Bring Forward"
           >
             <BringToFront className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onSendBackward}
-            className="p-1 rounded border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] flex items-center justify-center transition-colors"
+            className="p-1 rounded border border-(--border-subtle) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle) flex items-center justify-center transition-colors"
             title="Send Backward"
           >
             <SendToBack className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onSendToBack}
-            className="p-1 rounded border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)] flex items-center justify-center transition-colors"
+            className="p-1 rounded border border-(--border-subtle) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--border-subtle) flex items-center justify-center transition-colors"
             title="Send to Back"
           >
             <ChevronsDown className="w-3.5 h-3.5" />
