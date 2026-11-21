@@ -1,8 +1,12 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import LandingPage from "./Pages/LandingPage";
+
+// Lazy-loaded hero section / landing page
+const LandingPage = lazy(() => import("./Pages/LandingPage"));
+
+// Static page imports
 import Login from "./Pages/Login";
 import Signup from "./Pages/Signup";
 import Dashboard from "./Pages/Dashboard";
@@ -13,16 +17,19 @@ import Privacy from "./Pages/Privacy";
 import Profile from "./Pages/Profile";
 import AuthCallback from "./Pages/AuthCallback";
 
+// Fallback spinner while hero/landing loads
+const PageLoader: React.FC = () => (
+  <div className="min-h-screen bg-(--bg-main) flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-(--accent-primary) border-t-transparent animate-spin" />
+  </div>
+);
+
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-(--bg-main) flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!user) {
@@ -38,7 +45,14 @@ export function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LandingPage />} />
+            <Route
+              path="/"
+              element={
+                <Suspense fallback={<PageLoader />}>
+                  <LandingPage />
+                </Suspense>
+              }
+            />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
