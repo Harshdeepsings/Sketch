@@ -29,14 +29,9 @@ UserRoutes.post("/signup", async (req: any, res: Response) => {
   const { username, password, email, name } = parsed.data;
 
   try {
-    const existing = await UserModel.findOne({
-      $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }],
-    });
+    const existing = await UserModel.findOne({ username: username.toLowerCase() });
 
     if (existing) {
-      if (existing.email.toLowerCase() === email.toLowerCase()) {
-        return res.status(409).json({ message: "An account with this email already exists" });
-      }
       return res.status(409).json({ message: "Username is already taken" });
     }
 
@@ -78,8 +73,29 @@ UserRoutes.post("/login", async (req: any, res: Response) => {
   const { username, email, password } = parsed.data;
 
   try {
-    const query = email ? { email: email.toLowerCase() } : { username: (username || "").toLowerCase() };
-    const user = await UserModel.findOne(query);
+    let user = null;
+
+    if (username) {
+      user = await UserModel.findOne({ username: username.toLowerCase() });
+    } else if (email) {
+      // Find all accounts associated with this email
+      const candidates = await UserModel.find({ email: email.toLowerCase() });
+      if (candidates.length === 0) {
+        return res.status(401).json({ message: "Invalid email/username or password" });
+      }
+
+      // Check which account matches the provided password
+      for (const candidate of candidates) {
+        if (candidate.password && (await bcrypt.compare(password, candidate.password))) {
+          user = candidate;
+          break;
+        }
+      }
+
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email/username or password" });
+      }
+    }
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email/username or password" });
@@ -177,10 +193,6 @@ UserRoutes.put("/profile", UserMiddleware, async (req: AuthRequest, res: Respons
       const cleanEmail = email.trim().toLowerCase();
       if (!cleanEmail.includes("@")) {
         return res.status(400).json({ message: "Please enter a valid email address" });
-      }
-      const existing = await UserModel.findOne({ email: cleanEmail, _id: { $ne: userId } });
-      if (existing) {
-        return res.status(409).json({ message: "Email is already associated with another account" });
       }
       updates.email = cleanEmail;
     }

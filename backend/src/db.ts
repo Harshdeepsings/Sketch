@@ -16,7 +16,7 @@ export interface IUser {
 const UserSchema = new Schema<IUser>(
   {
     username: { type: String, unique: true, required: true, trim: true },
-    email: { type: String, unique: true, required: true, trim: true, lowercase: true },
+    email: { type: String, required: true, trim: true, lowercase: true, index: true },
     password: { type: String, required: false },
     googleId: { type: String, sparse: true, index: true },
     avatar: { type: String },
