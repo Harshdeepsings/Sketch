@@ -23,9 +23,15 @@ AuthRoutes.get(
     failureRedirect: `${process.env.CLIENT_URL || "http://localhost:8080"}/login?error=oauth_authentication_failed`,
   }),
   (req, res) => {
-    // User is logged in via session! Redirect to frontend dashboard.
-    const clientUrl = process.env.CLIENT_URL || "http://localhost:8080";
-    res.redirect(`${clientUrl}/dashboard`);
+    // Explicitly wait for session to persist in MongoDB before redirecting!
+    req.session.save((err) => {
+      const clientUrl = process.env.CLIENT_URL || "http://localhost:8080";
+      if (err) {
+        console.error("Google session save error:", err);
+        return res.redirect(`${clientUrl}/login?error=session_save_failed`);
+      }
+      res.redirect(`${clientUrl}/dashboard`);
+    });
   }
 );
 

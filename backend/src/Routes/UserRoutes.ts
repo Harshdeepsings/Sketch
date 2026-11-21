@@ -49,9 +49,16 @@ UserRoutes.post("/signup", async (req: any, res: Response) => {
         return res.status(500).json({ message: "Failed to establish user session" });
       }
 
-      return res.status(201).json({
-        message: "Account created successfully",
-        user: formatUser(user),
+      req.session.save((saveErr: any) => {
+        if (saveErr) {
+          console.error("Session save error after signup:", saveErr);
+          return res.status(500).json({ message: "Failed to save user session" });
+        }
+
+        return res.status(201).json({
+          message: "Account created successfully",
+          user: formatUser(user),
+        });
       });
     });
   } catch (e: any) {
@@ -118,9 +125,16 @@ UserRoutes.post("/login", async (req: any, res: Response) => {
         return res.status(500).json({ message: "Failed to establish user session" });
       }
 
-      return res.status(200).json({
-        message: "Logged in successfully",
-        user: formatUser(user),
+      req.session.save((saveErr: any) => {
+        if (saveErr) {
+          console.error("Session save error:", saveErr);
+          return res.status(500).json({ message: "Failed to save user session" });
+        }
+
+        return res.status(200).json({
+          message: "Logged in successfully",
+          user: formatUser(user),
+        });
       });
     });
   } catch (e: any) {
