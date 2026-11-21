@@ -1,30 +1,23 @@
 import React, { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { api, setAuthToken } from "../services/api";
+import { api } from "../services/api";
 
 export const AuthCallback: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { updateUser } = useAuth();
   const status = "Completing authentication...";
 
   useEffect(() => {
-    const token = searchParams.get("token");
-
-    if (!token) {
-      navigate("/login?error=oauth_missing_token");
-      return;
-    }
-
     async function finishAuth() {
       try {
-        setAuthToken(token!);
         const res = await api.getMe();
         if (res.user) {
           updateUser(res.user);
+          navigate("/dashboard");
+        } else {
+          navigate("/login?error=oauth_verification_failed");
         }
-        navigate("/dashboard");
       } catch (err) {
         console.error("Auth callback verification error:", err);
         navigate("/login?error=oauth_verification_failed");
@@ -32,7 +25,7 @@ export const AuthCallback: React.FC = () => {
     }
 
     finishAuth();
-  }, [searchParams, navigate, updateUser]);
+  }, [navigate, updateUser]);
 
   return (
     <div className="min-h-screen bg-(--bg-main) text-(--text-primary) flex flex-col items-center justify-center p-4">

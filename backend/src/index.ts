@@ -7,6 +7,8 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import session from "express-session";
+import MongoStore from "connect-mongo";
 import mongoose from "mongoose";
 
 import UserRoutes from "./Routes/UserRoutes";
@@ -18,10 +20,6 @@ import { configurePassport } from "./passport";
 
 const app = express();
 const server = http.createServer(app);
-
-// Initialize Passport authentication
-const passport = configurePassport();
-app.use(passport.initialize());
 
 // Cross-Origin Resource Sharing
 const allowedOrigins = [
@@ -45,14 +43,39 @@ app.use(
 app.use(express.json({ limit: "20mb" }));
 app.use(cookieParser());
 
+// Express Session Configuration using MongoDB Store
+export const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || "sketch-session-secret-key-2026",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI as string,
+    collectionName: "sessions",
+    ttl: 14 * 24 * 60 * 60, // 14 days
+  }),
+  cookie: {
+    maxAge: 14 * 24 * 60 * 60 * 1000, // 14 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  },
+});
+
+app.use(sessionMiddleware);
+
+// Initialize Passport authentication and session handling
+const passport = configurePassport();
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Mount API Route Modules
 app.use("/api/v1/auth", AuthRoutes);
 app.use("/api/v1/user", UserRoutes);
 app.use("/api/v1/canvas", CanvasRoutes);
 app.use("/api/health", HealthRoutes);
 
-// Initialize Real-time Socket.IO Subsystem
-const io = setupSocketIO(server);
+// Initialize Real-time Socket.IO Subsystem with shared session
+const io = setupSocketIO(server, sessionMiddleware);
 
 // Database Connection & Server Startup
 const PORT = process.env.PORT || 5000;

@@ -1,11 +1,9 @@
 import { Router } from "express";
-import jwt from "jsonwebtoken";
 import passport from "../passport";
-import { getJwtSecret, getJwtRefreshSecret } from "../Middleware";
 
 const AuthRoutes = Router();
 
-// GET /api/v1/auth/google - Initiate Google OAuth
+// GET /api/v1/auth/google - Start Google OAuth login
 AuthRoutes.get(
   "/google",
   (req, res, next) => {
@@ -15,44 +13,19 @@ AuthRoutes.get(
     }
     next();
   },
-  passport.authenticate("google", { scope: ["profile", "email"], session: false })
+  passport.authenticate("google", { scope: ["profile", "email"] })
 );
 
 // GET /api/v1/auth/google/callback - Handle Google Callback
 AuthRoutes.get(
   "/google/callback",
-  (req, res, next) => {
-    passport.authenticate("google", {
-      session: false,
-      failureRedirect: `${process.env.CLIENT_URL || "http://localhost:8080"}/login?error=oauth_failed`,
-    }, (err: any, user: any) => {
-      if (err || !user) {
-        console.error("Google OAuth callback error:", err);
-        const clientUrl = process.env.CLIENT_URL || "http://localhost:8080";
-        return res.redirect(`${clientUrl}/login?error=oauth_authentication_failed`);
-      }
-
-      const accessSecret = getJwtSecret();
-      const refreshSecret = getJwtRefreshSecret();
-
-      const accessToken = jwt.sign({ id: user._id.toString() }, accessSecret, {
-        expiresIn: "7d",
-      });
-
-      const refreshToken = jwt.sign({ id: user._id.toString() }, refreshSecret, {
-        expiresIn: "30d",
-      });
-
-      res.cookie("RefreshToken", refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-      });
-
-      const clientUrl = process.env.CLIENT_URL || "http://localhost:8080";
-      return res.redirect(`${clientUrl}/auth/callback?token=${accessToken}`);
-    })(req, res, next);
+  passport.authenticate("google", {
+    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:8080"}/login?error=oauth_authentication_failed`,
+  }),
+  (req, res) => {
+    // User is logged in via session! Redirect to frontend dashboard.
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:8080";
+    res.redirect(`${clientUrl}/dashboard`);
   }
 );
 

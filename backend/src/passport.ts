@@ -3,6 +3,22 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { UserModel } from "./db";
 
 export function configurePassport(): typeof passport {
+  // 1. Save user ID in session
+  passport.serializeUser((user: any, done) => {
+    done(null, user._id.toString());
+  });
+
+  // 2. Fetch user from database using session ID
+  passport.deserializeUser(async (id: string, done) => {
+    try {
+      const user = await UserModel.findById(id).select("-password").lean();
+      done(null, user || null);
+    } catch (err) {
+      done(err, null);
+    }
+  });
+
+  // 3. Google OAuth Strategy (if credentials are provided)
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const googleCallbackUrl =
@@ -23,16 +39,15 @@ export function configurePassport(): typeof passport {
               return done(new Error("No email found in Google account profile"));
             }
 
-            // 1. Check if user already linked via Google ID
+            // Check if user already exists by Google ID
             let user = await UserModel.findOne({ googleId: profile.id }).lean();
             if (user) {
               return done(null, user);
             }
 
-            // 2. Check if user exists with the same email
+            // Check if user already exists by Email
             user = await UserModel.findOne({ email }).lean();
             if (user) {
-              // Link Google account
               await UserModel.findByIdAndUpdate(user._id, {
                 googleId: profile.id,
                 avatar: profile.photos?.[0]?.value || user.avatar,
@@ -42,12 +57,13 @@ export function configurePassport(): typeof passport {
               return done(null, updated || user);
             }
 
-            // 3. Create a new user from Google profile
-            const rawName = profile.displayName || profile.name?.givenName || "Creator";
-            const baseUsername = rawName
-              .toLowerCase()
-              .replace(/[^a-z0-9_]/g, "")
-              .slice(0, 14) || "sketcher";
+            // Create new user for first-time Google sign in
+            const rawName = profile.displayName || profile.name?.givenName || "Sketcher";
+            const baseUsername =
+              rawName
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, "")
+                .slice(0, 14) || "sketcher";
             const suffix = Math.random().toString(36).substring(2, 6);
             const username = `${baseUsername}_${suffix}`;
 
@@ -62,16 +78,14 @@ export function configurePassport(): typeof passport {
 
             return done(null, newUser.toObject());
           } catch (err) {
-            console.error("Passport Google OAuth error:", err);
+            console.error("Google OAuth error:", err);
             return done(err as Error);
           }
         }
       )
     );
   } else {
-    console.log(
-      "⚠️ Passport Google Strategy disabled: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET not set in environment."
-    );
+    console.log("Passport: Google OAuth disabled (missing credentials in .env)");
   }
 
   return passport;

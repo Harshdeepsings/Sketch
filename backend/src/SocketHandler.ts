@@ -1,9 +1,7 @@
 import http from "http";
 import { Server, Socket } from "socket.io";
-import jwt from "jsonwebtoken";
 import { UserModel, CanvasModel } from "./db";
 import { getDrawingPermission } from "./Routes/CanvasRoutes";
-import { getJwtSecret } from "./Middleware";
 
 interface SocketUser {
   userId: string;
@@ -33,16 +31,19 @@ function getRandomColor(seed: string): string {
   return COLLABORATOR_COLORS[index] ?? "#A855F7";
 }
 
-export function setupSocketIO(server: http.Server): Server {
+export function setupSocketIO(server: http.Server, sessionMiddleware: any): Server {
   const io = new Server(server, {
     cors: {
-      origin: "*",
+      origin: [process.env.CLIENT_URL || "http://localhost:8080", "http://127.0.0.1:8080"],
       methods: ["GET", "POST"],
       credentials: true,
     },
     pingTimeout: 30000,
     pingInterval: 10000,
   });
+
+  // Share session middleware with Socket.IO engine
+  io.engine.use(sessionMiddleware);
 
   const roomParticipants = new Map<string, Map<string, any>>();
   const saveDebounceTimers = new Map<string, NodeJS.Timeout>();
@@ -81,26 +82,17 @@ export function setupSocketIO(server: http.Server): Server {
     }
   }
 
-  // Socket authentication middleware
+  // Socket session authentication middleware
   io.use(async (socket: Socket, next) => {
     try {
-      const token =
-        socket.handshake.auth?.token ||
-        socket.handshake.headers?.authorization?.replace(/^Bearer\s+/i, "") ||
-        socket.handshake.query?.token;
+      const req = socket.request as any;
+      const userId = req.session?.passport?.user;
 
-      if (!token) {
-        return next(new Error("Authentication token required"));
+      if (!userId) {
+        return next(new Error("Authentication required"));
       }
 
-      const secret = getJwtSecret();
-      const decoded = jwt.verify(token as string, secret) as { id: string };
-
-      if (!decoded || !decoded.id) {
-        return next(new Error("Invalid token"));
-      }
-
-      const user = await UserModel.findById(decoded.id).select("-password");
+      const user = await UserModel.findById(userId).select("-password").lean();
       if (!user) {
         return next(new Error("User not found"));
       }
@@ -140,157 +132,97 @@ export function setupSocketIO(server: http.Server): Server {
           color: getRandomColor(userId),
           role,
         };
-        socket.data.userInfo = userInfo;
 
         if (!roomParticipants.has(drawingId)) {
           roomParticipants.set(drawingId, new Map());
         }
-        roomParticipants.get(drawingId)!.set(socket.id, {
-          ...userInfo,
-          cursor: null,
-        });
+        roomParticipants.get(drawingId)!.set(socket.id, userInfo);
 
-        if (!roomElementsBuffer.has(drawingId)) {
-          roomElementsBuffer.set(drawingId, drawing.elements || []);
-        }
+        const activeUsers = Array.from(roomParticipants.get(drawingId)!.values());
+        io.to(drawingId).emit("collaborators-update", { users: activeUsers });
 
         socket.emit("room-joined", {
           drawingId,
           role,
-          elements: roomElementsBuffer.get(drawingId),
           revision: drawing.revision,
-          participants: Array.from(roomParticipants.get(drawingId)!.values()),
+          activeUsers,
         });
-
-        socket.to(drawingId).emit("participant-joined", {
-          ...userInfo,
-          cursor: null,
-        });
-
-        console.log(`User ${user.username} joined drawing ${drawingId} as ${role}`);
       } catch (err) {
-        console.error("Error joining drawing:", err);
-        socket.emit("error-message", { message: "Failed to join drawing session" });
+        console.error("Socket join error:", err);
       }
     });
 
-    // Cursor movement broadcast
-    socket.on("cursor-move", ({ x, y }: { x: number; y: number }) => {
-      const drawingId = socket.data.drawingId;
-      if (!drawingId) return;
-
-      const participants = roomParticipants.get(drawingId);
-      if (participants && participants.has(socket.id)) {
-        participants.get(socket.id).cursor = { x, y };
-      }
-
-      socket.to(drawingId).emit("cursor-update", {
+    // Handle cursor movement broadcast
+    socket.on("cursor-move", ({ drawingId, x, y }: { drawingId: string; x: number; y: number }) => {
+      socket.to(drawingId).emit("user-cursor", {
         userId,
+        username: user.username,
+        name: user.name || user.username,
+        color: getRandomColor(userId),
         x,
         y,
-        username: user.username,
-        color: socket.data.userInfo?.color,
       });
     });
 
-    // Element created / added
-    socket.on("element-create", (element: any) => {
-      const drawingId = socket.data.drawingId;
-      const role = socket.data.role;
-
-      if (!drawingId || (role !== "owner" && role !== "editor")) return;
-      if (!element || !element.id) return;
-
-      let elements = roomElementsBuffer.get(drawingId) || [];
-      elements = [...elements, element];
-      roomElementsBuffer.set(drawingId, elements);
-
-      socket.to(drawingId).emit("element-created", element);
-      scheduleAutoSave(drawingId);
-    });
-
-    // Element updated
-    socket.on("element-update", (element: any) => {
-      const drawingId = socket.data.drawingId;
-      const role = socket.data.role;
-
-      if (!drawingId || (role !== "owner" && role !== "editor")) return;
-      if (!element || !element.id) return;
-
-      let elements = roomElementsBuffer.get(drawingId) || [];
-      const index = elements.findIndex((el) => el.id === element.id);
-
-      if (index !== -1) {
-        elements[index] = { ...elements[index], ...element };
-      } else {
-        elements.push(element);
-      }
-      roomElementsBuffer.set(drawingId, elements);
-
-      socket.to(drawingId).emit("element-updated", element);
-      scheduleAutoSave(drawingId);
-    });
-
-    // Batch elements update
-    socket.on("elements-batch-update", (updatedElements: any[]) => {
-      const drawingId = socket.data.drawingId;
-      const role = socket.data.role;
-
-      if (!drawingId || (role !== "owner" && role !== "editor")) return;
-      if (!Array.isArray(updatedElements)) return;
-
-      let elements = roomElementsBuffer.get(drawingId) || [];
-      const updateMap = new Map(updatedElements.map((el) => [el.id, el]));
-
-      elements = elements.map((el) => {
-        if (updateMap.has(el.id)) {
-          return { ...el, ...updateMap.get(el.id) };
+    // Handle element updates from active drawing
+    socket.on(
+      "elements-update",
+      ({
+        drawingId,
+        elements,
+        revision,
+      }: {
+        drawingId: string;
+        elements: any[];
+        revision: number;
+      }) => {
+        if (socket.data.role === "viewer") {
+          socket.emit("error-message", { message: "Viewers cannot modify drawings" });
+          return;
         }
-        return el;
-      });
 
-      roomElementsBuffer.set(drawingId, elements);
-      socket.to(drawingId).emit("elements-batch-updated", updatedElements);
-      scheduleAutoSave(drawingId);
-    });
+        roomElementsBuffer.set(drawingId, elements);
 
-    // Element deleted
-    socket.on("element-delete", ({ id }: { id: string }) => {
-      const drawingId = socket.data.drawingId;
-      const role = socket.data.role;
+        socket.to(drawingId).emit("elements-sync", {
+          elements,
+          revision,
+          userId,
+        });
 
-      if (!drawingId || (role !== "owner" && role !== "editor")) return;
+        scheduleAutoSave(drawingId);
+      }
+    );
 
-      let elements = roomElementsBuffer.get(drawingId) || [];
-      elements = elements.filter((el) => el.id !== id);
-      roomElementsBuffer.set(drawingId, elements);
-
-      socket.to(drawingId).emit("element-deleted", { id });
-      scheduleAutoSave(drawingId);
-    });
-
-    // Full canvas reset / clear
-    socket.on("canvas-clear", () => {
-      const drawingId = socket.data.drawingId;
-      const role = socket.data.role;
-
-      if (!drawingId || (role !== "owner" && role !== "editor")) return;
+    // Handle drawing clear
+    socket.on("canvas-clear", ({ drawingId }: { drawingId: string }) => {
+      if (socket.data.role === "viewer") {
+        socket.emit("error-message", { message: "Viewers cannot clear drawings" });
+        return;
+      }
 
       roomElementsBuffer.set(drawingId, []);
-      socket.to(drawingId).emit("canvas-cleared");
+      socket.to(drawingId).emit("canvas-cleared", { userId });
       scheduleAutoSave(drawingId);
     });
 
-    // Disconnect cleanup
+    // Handle explicit drawing save
+    socket.on("save-drawing", async ({ drawingId }: { drawingId: string }) => {
+      if (socket.data.role === "viewer") return;
+      await flushAutoSave(drawingId);
+    });
+
+    // Handle user disconnect
     socket.on("disconnect", () => {
       const drawingId = socket.data.drawingId;
       if (drawingId && roomParticipants.has(drawingId)) {
-        const participants = roomParticipants.get(drawingId)!;
-        participants.delete(socket.id);
+        roomParticipants.get(drawingId)!.delete(socket.id);
+        const activeUsers = Array.from(roomParticipants.get(drawingId)!.values());
 
-        socket.to(drawingId).emit("participant-left", { userId });
+        io.to(drawingId).emit("collaborators-update", { users: activeUsers });
+        io.to(drawingId).emit("user-disconnected", { userId });
 
-        if (participants.size === 0) {
+        if (roomParticipants.get(drawingId)!.size === 0) {
+          roomParticipants.delete(drawingId);
           flushAutoSave(drawingId);
         }
       }

@@ -12,33 +12,18 @@ export class ApiError extends Error {
   }
 }
 
-export function getAuthToken(): string | null {
-  return localStorage.getItem("sketch_token");
-}
-
-export function setAuthToken(token: string): void {
-  localStorage.setItem("sketch_token", token);
-}
-
-export function removeAuthToken(): void {
-  localStorage.removeItem("sketch_token");
-}
-
+// Simple HTTP request wrapper that passes session cookies automatically
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const token = getAuthToken();
   const headers = new Headers(options.headers || {});
 
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers,
+    credentials: "include", // Essential for session cookies!
   });
 
   const isJson = res.headers.get("content-type")?.includes("application/json");
@@ -55,13 +40,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 export const api = {
   // Auth & Profile Endpoints
   signup: (body: { username: string; email: string; password: string; name?: string }) =>
-    request<{ user: any; accessToken: string; message: string }>("/user/signup", {
+    request<{ user: any; message: string }>("/user/signup", {
       method: "POST",
       body: JSON.stringify(body),
     }),
 
   login: (body: { username?: string; email?: string; password: string }) =>
-    request<{ user: any; accessToken: string; message: string }>("/user/login", {
+    request<{ user: any; message: string }>("/user/login", {
       method: "POST",
       body: JSON.stringify(body),
     }),

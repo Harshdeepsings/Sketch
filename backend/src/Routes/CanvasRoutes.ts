@@ -6,7 +6,11 @@ import { UserMiddleware, AuthRequest } from "../Middleware";
 
 const CanvasRoutes = Router();
 
-// Helper: Determine user's role on a drawing
+// Helper: Safely extract a single route param string
+const getParam = (val: string | string[] | undefined): string =>
+  Array.isArray(val) ? val[0] ?? "" : val ?? "";
+
+// Helper: Determine a user's role on a drawing ("owner" | "editor" | "viewer" | null)
 export async function getDrawingPermission(
   drawingId: string,
   userId: string
@@ -23,16 +27,13 @@ export async function getDrawingPermission(
     return { drawing: null, role: null };
   }
 
-  const ownerId = (drawing.owner as any)._id
-    ? (drawing.owner as any)._id.toString()
-    : drawing.owner.toString();
-
+  const ownerId = (drawing.owner as any)?._id?.toString() || drawing.owner?.toString();
   if (ownerId === userId) {
     return { drawing, role: "owner" };
   }
 
   const collaborator = drawing.collaborators.find((c: any) => {
-    const cId = c.user?._id ? c.user._id.toString() : c.user?.toString();
+    const cId = c.user?._id?.toString() || c.user?.toString();
     return cId === userId;
   });
 
@@ -47,65 +48,28 @@ export async function getDrawingPermission(
   return { drawing, role: null };
 }
 
-// GET / - List all drawings accessible by user (owned + shared)
+// GET / - List all drawings accessible by the logged-in user (owned + shared)
 CanvasRoutes.get("/", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const userId = req.userId!;
 
-    const userObjectId = new Types.ObjectId(userId);
+    // Find all drawings where the user is either the owner or in the collaborators list
+    const drawings = await CanvasModel.find({
+      $or: [{ owner: userId }, { "collaborators.user": userId }],
+    })
+      .populate("owner", "username email name")
+      .sort({ updatedAt: -1 })
+      .lean();
 
-    const rawDrawings = await CanvasModel.aggregate([
-      {
-        $match: {
-          $or: [{ owner: userObjectId }, { "collaborators.user": userObjectId }],
-        },
-      },
-      {
-        $sort: { updatedAt: -1 },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "owner",
-          foreignField: "_id",
-          as: "ownerDoc",
-        },
-      },
-      {
-        $unwind: { path: "$ownerDoc", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $project: {
-          title: 1,
-          isPublic: 1,
-          revision: 1,
-          updatedAt: 1,
-          createdAt: 1,
-          owner: 1,
-          collaborators: 1,
-          ownerInfo: {
-            _id: "$ownerDoc._id",
-            username: "$ownerDoc.username",
-            email: "$ownerDoc.email",
-            name: "$ownerDoc.name",
-          },
-          elementsCount: { $size: { $ifNull: ["$elements", []] } },
-        },
-      },
-    ]);
-
-    const formatted = rawDrawings.map((d: any) => {
-      const isOwner = d.owner?.toString() === userId;
+    const formatted = drawings.map((d: any) => {
+      const isOwner = d.owner?._id?.toString() === userId || d.owner?.toString() === userId;
       let role: "owner" | "editor" | "viewer" = "viewer";
 
       if (isOwner) {
         role = "owner";
       } else {
         const collab = (d.collaborators || []).find(
-          (c: any) => (c.user?._id ? c.user._id.toString() : c.user?.toString()) === userId
+          (c: any) => (c.user?._id?.toString() || c.user?.toString()) === userId
         );
         role = collab?.role || "viewer";
       }
@@ -113,8 +77,8 @@ CanvasRoutes.get("/", UserMiddleware, async (req: AuthRequest, res: Response) =>
       return {
         id: d._id.toString(),
         title: d.title,
-        owner: d.ownerInfo || d.owner,
-        elementsCount: d.elementsCount || 0,
+        owner: d.owner,
+        elementsCount: (d.elements || []).length,
         collaboratorsCount: (d.collaborators || []).length,
         isPublic: d.isPublic,
         role,
@@ -123,9 +87,7 @@ CanvasRoutes.get("/", UserMiddleware, async (req: AuthRequest, res: Response) =>
       };
     });
 
-    return res.status(200).json({
-      drawings: formatted,
-    });
+    return res.status(200).json({ drawings: formatted });
   } catch (e: any) {
     console.error("Fetch drawings error:", e);
     return res.status(500).json({ message: "Failed to fetch drawings" });
@@ -135,11 +97,7 @@ CanvasRoutes.get("/", UserMiddleware, async (req: AuthRequest, res: Response) =>
 // Handler: Create a new drawing
 const handleCreateDrawing = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.userId;
-    if (!userId) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
+    const userId = req.userId!;
     const title = (req.body.title || "Untitled Drawing").trim();
 
     const drawing = await CanvasModel.create({
@@ -171,18 +129,14 @@ const handleCreateDrawing = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// POST / and POST /create - Create a new drawing
 CanvasRoutes.post("/", UserMiddleware, handleCreateDrawing);
 CanvasRoutes.post("/create", UserMiddleware, handleCreateDrawing);
 
-// GET /:id - Fetch single drawing
+// GET /:id - Fetch a single drawing by ID
 CanvasRoutes.get("/:id", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid drawing ID or user session" });
-    }
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
 
@@ -217,15 +171,11 @@ CanvasRoutes.get("/:id", UserMiddleware, async (req: AuthRequest, res: Response)
   }
 });
 
-// PUT /:id - Update drawing (elements, title, autosave)
+// PUT /:id - Update drawing (title, elements, autosave)
 CanvasRoutes.put("/:id", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
-
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
     const { elements, title, expectedRevision } = req.body;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
@@ -238,7 +188,7 @@ CanvasRoutes.put("/:id", UserMiddleware, async (req: AuthRequest, res: Response)
       return res.status(403).json({ message: "Editor permission required to modify drawing" });
     }
 
-    // Concurrency check if expectedRevision is provided
+    // Revision check to prevent accidental overwrites
     if (expectedRevision !== undefined && drawing.revision > expectedRevision + 5) {
       return res.status(409).json({
         message: "Drawing has been updated by another collaborator",
@@ -252,7 +202,7 @@ CanvasRoutes.put("/:id", UserMiddleware, async (req: AuthRequest, res: Response)
     }
 
     if (Array.isArray(elements)) {
-      const sanitizedElements: ICanvasElement[] = elements.map((el: any) => ({
+      drawing.elements = elements.map((el: any) => ({
         id: String(el.id || crypto.randomUUID()),
         type: el.type,
         x: Number(el.x) || 0,
@@ -276,8 +226,6 @@ CanvasRoutes.put("/:id", UserMiddleware, async (req: AuthRequest, res: Response)
         groupId: el.groupId ? String(el.groupId) : undefined,
         isLocked: el.isLocked === true,
       }));
-
-      drawing.elements = sanitizedElements;
     }
 
     drawing.revision = (drawing.revision || 1) + 1;
@@ -294,14 +242,11 @@ CanvasRoutes.put("/:id", UserMiddleware, async (req: AuthRequest, res: Response)
   }
 });
 
-// POST /:id/duplicate - Duplicate drawing
+// POST /:id/duplicate - Duplicate an existing drawing
 CanvasRoutes.post("/:id/duplicate", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
 
@@ -336,11 +281,8 @@ CanvasRoutes.post("/:id/duplicate", UserMiddleware, async (req: AuthRequest, res
 // DELETE /:id - Delete drawing (owner only)
 CanvasRoutes.delete("/:id", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
 
@@ -353,7 +295,7 @@ CanvasRoutes.delete("/:id", UserMiddleware, async (req: AuthRequest, res: Respon
     }
 
     await CanvasModel.findByIdAndDelete(id);
-    await (InvitationModel as any).deleteMany({ drawingId: new Types.ObjectId(id) });
+    await InvitationModel.deleteMany({ drawingId: new Types.ObjectId(id) });
 
     return res.status(200).json({ message: "Drawing deleted successfully" });
   } catch (e: any) {
@@ -364,12 +306,8 @@ CanvasRoutes.delete("/:id", UserMiddleware, async (req: AuthRequest, res: Respon
 // POST /:id/invite - Invite collaborator by email
 CanvasRoutes.post("/:id/invite", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
-
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
     const { email, role = "editor" } = req.body;
 
     if (!email || typeof email !== "string") {
@@ -377,7 +315,6 @@ CanvasRoutes.post("/:id/invite", UserMiddleware, async (req: AuthRequest, res: R
     }
 
     const targetEmail = email.trim().toLowerCase();
-
     const { drawing, role: userRole } = await getDrawingPermission(id, userId);
 
     if (!drawing) {
@@ -394,13 +331,13 @@ CanvasRoutes.post("/:id/invite", UserMiddleware, async (req: AuthRequest, res: R
       return res.status(400).json({ message: "User is already the owner of this drawing" });
     }
 
-    // Check if user is registered
+    // Check if user is registered in the database
     const registeredUser = await UserModel.findOne({ email: targetEmail });
 
     if (registeredUser) {
-      // Check if already a collaborator
+      // If already a collaborator, update role
       const existingCollab = drawing.collaborators.find((c: any) => {
-        const cId = c.user?._id ? c.user._id.toString() : c.user?.toString();
+        const cId = c.user?._id?.toString() || c.user?.toString();
         return cId === registeredUser._id.toString();
       });
 
@@ -421,13 +358,12 @@ CanvasRoutes.post("/:id/invite", UserMiddleware, async (req: AuthRequest, res: R
         });
       }
 
-      // Add directly as collaborator
+      // Add as new collaborator
       drawing.collaborators.push({
         user: registeredUser._id,
         role: role === "viewer" ? "viewer" : "editor",
         addedAt: new Date(),
       });
-
       await drawing.save();
 
       return res.status(200).json({
@@ -444,11 +380,11 @@ CanvasRoutes.post("/:id/invite", UserMiddleware, async (req: AuthRequest, res: R
       });
     }
 
-    // User is not yet registered: create an invitation token
+    // If user is not yet registered, create a pending invitation token
     const token = crypto.randomBytes(24).toString("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    await (InvitationModel as any).findOneAndUpdate(
+    await InvitationModel.findOneAndUpdate(
       { drawingId: drawing._id, inviteeEmail: targetEmail, status: "pending" },
       {
         drawingId: drawing._id,
@@ -473,14 +409,11 @@ CanvasRoutes.post("/:id/invite", UserMiddleware, async (req: AuthRequest, res: R
   }
 });
 
-// GET /:id/collaborators - List collaborators
+// GET /:id/collaborators - List drawing collaborators and pending invites
 CanvasRoutes.get("/:id/collaborators", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
 
@@ -492,7 +425,7 @@ CanvasRoutes.get("/:id/collaborators", UserMiddleware, async (req: AuthRequest, 
       .populate("owner", "username email name")
       .populate("collaborators.user", "username email name");
 
-    const pendingInvites: any = await (InvitationModel as any).find({
+    const pendingInvites = await InvitationModel.find({
       drawingId: new Types.ObjectId(id),
       status: "pending",
       expiresAt: { $gt: new Date() },
@@ -515,15 +448,12 @@ CanvasRoutes.get("/:id/collaborators", UserMiddleware, async (req: AuthRequest, 
   }
 });
 
-// DELETE /:id/collaborators/:targetUserId - Remove collaborator
+// DELETE /:id/collaborators/:targetUserId - Remove a collaborator
 CanvasRoutes.delete("/:id/collaborators/:targetUserId", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const targetUserId = Array.isArray(req.params.targetUserId) ? req.params.targetUserId[0] : req.params.targetUserId;
-    const userId = req.userId;
-    if (!id || !targetUserId || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
+    const id = getParam(req.params.id);
+    const targetUserId = getParam(req.params.targetUserId);
+    const userId = req.userId!;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
 
@@ -536,7 +466,7 @@ CanvasRoutes.delete("/:id/collaborators/:targetUserId", UserMiddleware, async (r
     }
 
     drawing.collaborators = drawing.collaborators.filter((c: any) => {
-      const cId = c.user?._id ? c.user._id.toString() : c.user?.toString();
+      const cId = c.user?._id?.toString() || c.user?.toString();
       return cId !== targetUserId;
     });
 
@@ -551,13 +481,10 @@ CanvasRoutes.delete("/:id/collaborators/:targetUserId", UserMiddleware, async (r
 // POST /invite/accept/:token - Accept an invitation
 CanvasRoutes.post("/invite/accept/:token", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const token = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
-    const userId = req.userId;
-    if (!token || !userId) {
-      return res.status(400).json({ message: "Invalid invitation token or session" });
-    }
+    const token = getParam(req.params.token);
+    const userId = req.userId!;
 
-    const invitation: any = await (InvitationModel as any).findOne({
+    const invitation = await InvitationModel.findOne({
       token,
       status: "pending",
       expiresAt: { $gt: new Date() },
@@ -573,7 +500,7 @@ CanvasRoutes.post("/invite/accept/:token", UserMiddleware, async (req: AuthReque
     }
 
     const alreadyCollab = drawing.collaborators.some((c: any) => {
-      const cId = c.user?._id ? c.user._id.toString() : c.user?.toString();
+      const cId = c.user?._id?.toString() || c.user?.toString();
       return cId === userId;
     });
 
@@ -598,14 +525,11 @@ CanvasRoutes.post("/invite/accept/:token", UserMiddleware, async (req: AuthReque
   }
 });
 
-// POST /:id/toggle-public - Toggle public access
+// POST /:id/toggle-public - Toggle public/private view access
 CanvasRoutes.post("/:id/toggle-public", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const userId = req.userId;
-    if (!id || !userId) {
-      return res.status(400).json({ message: "Invalid parameters" });
-    }
+    const id = getParam(req.params.id);
+    const userId = req.userId!;
 
     const { drawing, role } = await getDrawingPermission(id, userId);
 

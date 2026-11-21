@@ -1,5 +1,4 @@
 import { io, Socket } from "socket.io-client";
-import { getAuthToken } from "./api";
 
 let socket: Socket | null = null;
 
@@ -7,9 +6,8 @@ const WS_BASE = import.meta.env.VITE_WS_URL || "http://localhost:5000";
 
 export function getSocket(): Socket {
   if (!socket) {
-    const token = getAuthToken();
     socket = io(WS_BASE, {
-      auth: { token },
+      withCredentials: true, // Send session cookies automatically with websocket connection
       autoConnect: false,
       reconnection: true,
       reconnectionAttempts: 10,
@@ -22,12 +20,6 @@ export function getSocket(): Socket {
 
 export function connectSocket(): Socket {
   const s = getSocket();
-  const token = getAuthToken();
-
-  if (s.auth) {
-    (s.auth as any).token = token;
-  }
-
   if (!s.connected) {
     s.connect();
   }

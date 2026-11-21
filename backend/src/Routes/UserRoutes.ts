@@ -1,16 +1,24 @@
 import { Router, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { SignupSchema, LoginSchema } from "../UserValidation";
 import { UserModel, CanvasModel, InvitationModel } from "../db";
-import { UserMiddleware, AuthRequest, getJwtSecret, getJwtRefreshSecret } from "../Middleware";
+import { UserMiddleware, AuthRequest } from "../Middleware";
 
 const UserRoutes = Router();
 
-// POST /signup
-UserRoutes.post("/signup", async (req, res: Response) => {
-  const parsed = SignupSchema.safeParse(req.body);
+// Helper: Format user object for safe public response
+function formatUser(user: any) {
+  return {
+    id: user._id?.toString() || user.id?.toString(),
+    username: user.username,
+    email: user.email,
+    name: user.name,
+  };
+}
 
+// POST /signup - Register new account and establish session
+UserRoutes.post("/signup", async (req: any, res: Response) => {
+  const parsed = SignupSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
       message: "Validation failed",
@@ -33,7 +41,6 @@ UserRoutes.post("/signup", async (req, res: Response) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = await UserModel.create({
       username: username.toLowerCase(),
       password: hashedPassword,
@@ -41,33 +48,16 @@ UserRoutes.post("/signup", async (req, res: Response) => {
       name: name || username,
     });
 
-    const accessSecret = getJwtSecret();
-    const refreshSecret = getJwtRefreshSecret();
+    req.login(user, (err: any) => {
+      if (err) {
+        console.error("Session login error after signup:", err);
+        return res.status(500).json({ message: "Failed to establish user session" });
+      }
 
-    const accessToken = jwt.sign({ id: user._id.toString() }, accessSecret, {
-      expiresIn: "7d",
-    });
-
-    const refreshToken = jwt.sign({ id: user._id.toString() }, refreshSecret, {
-      expiresIn: "30d",
-    });
-
-    res.cookie("RefreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.status(201).json({
-      message: "Account created successfully",
-      accessToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        name: user.name,
-      },
+      return res.status(201).json({
+        message: "Account created successfully",
+        user: formatUser(user),
+      });
     });
   } catch (e: any) {
     console.error("Signup error:", e);
@@ -75,10 +65,9 @@ UserRoutes.post("/signup", async (req, res: Response) => {
   }
 });
 
-// POST /login
-const handleLogin = async (req: any, res: Response) => {
+// POST /login - Authenticate with email/username & password
+UserRoutes.post("/login", async (req: any, res: Response) => {
   const parsed = LoginSchema.safeParse(req.body);
-
   if (!parsed.success) {
     return res.status(400).json({
       message: "Invalid login credentials provided",
@@ -90,7 +79,7 @@ const handleLogin = async (req: any, res: Response) => {
 
   try {
     const query = email ? { email: email.toLowerCase() } : { username: (username || "").toLowerCase() };
-    const user = await UserModel.findOne(query).lean();
+    const user = await UserModel.findOne(query);
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email/username or password" });
@@ -107,43 +96,24 @@ const handleLogin = async (req: any, res: Response) => {
       return res.status(401).json({ message: "Invalid email/username or password" });
     }
 
-    const accessSecret = getJwtSecret();
-    const refreshSecret = getJwtRefreshSecret();
+    req.login(user, (err: any) => {
+      if (err) {
+        console.error("Session login error:", err);
+        return res.status(500).json({ message: "Failed to establish user session" });
+      }
 
-    const accessToken = jwt.sign({ id: user._id.toString() }, accessSecret, {
-      expiresIn: "7d",
-    });
-
-    const refreshToken = jwt.sign({ id: user._id.toString() }, refreshSecret, {
-      expiresIn: "30d",
-    });
-
-    res.cookie("RefreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.status(200).json({
-      message: "Logged in successfully",
-      accessToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        name: user.name,
-      },
+      return res.status(200).json({
+        message: "Logged in successfully",
+        user: formatUser(user),
+      });
     });
   } catch (e: any) {
     console.error("Login error:", e);
     return res.status(500).json({ message: "Internal server error during login" });
   }
-};
+});
 
-UserRoutes.post("/login", handleLogin);
-
-// GET /me (Profile details & statistics)
+// GET /me - Profile details & drawing statistics
 UserRoutes.get("/me", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user;
@@ -151,18 +121,16 @@ UserRoutes.get("/me", UserMiddleware, async (req: AuthRequest, res: Response) =>
       return res.status(404).json({ message: "User not found" });
     }
 
-    const ownedCount = await CanvasModel.countDocuments({ ownerId: user._id });
+    const userId = user._id || user.id;
+    const ownedCount = await CanvasModel.countDocuments({ owner: userId });
     const sharedCount = await CanvasModel.countDocuments({
-      ownerId: { $ne: user._id },
-      "collaborators.userId": user._id,
+      owner: { $ne: userId },
+      "collaborators.user": userId,
     });
 
     return res.status(200).json({
       user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        name: user.name,
+        ...formatUser(user),
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
@@ -177,7 +145,7 @@ UserRoutes.get("/me", UserMiddleware, async (req: AuthRequest, res: Response) =>
   }
 });
 
-// PUT /profile (Update user display name, username, or email)
+// PUT /profile - Update display name, username, or email
 UserRoutes.put("/profile", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = req.user;
@@ -185,6 +153,7 @@ UserRoutes.put("/profile", UserMiddleware, async (req: AuthRequest, res: Respons
       return res.status(404).json({ message: "User not found" });
     }
 
+    const userId = user._id || user.id;
     const { name, username, email } = req.body;
     const updates: Partial<{ name: string; username: string; email: string }> = {};
 
@@ -197,7 +166,7 @@ UserRoutes.put("/profile", UserMiddleware, async (req: AuthRequest, res: Respons
       if (cleanUsername.length < 3) {
         return res.status(400).json({ message: "Username must be at least 3 characters long" });
       }
-      const existing = await UserModel.findOne({ username: cleanUsername, _id: { $ne: user._id } });
+      const existing = await UserModel.findOne({ username: cleanUsername, _id: { $ne: userId } });
       if (existing) {
         return res.status(409).json({ message: "Username is already taken by another account" });
       }
@@ -209,23 +178,18 @@ UserRoutes.put("/profile", UserMiddleware, async (req: AuthRequest, res: Respons
       if (!cleanEmail.includes("@")) {
         return res.status(400).json({ message: "Please enter a valid email address" });
       }
-      const existing = await UserModel.findOne({ email: cleanEmail, _id: { $ne: user._id } });
+      const existing = await UserModel.findOne({ email: cleanEmail, _id: { $ne: userId } });
       if (existing) {
         return res.status(409).json({ message: "Email is already associated with another account" });
       }
       updates.email = cleanEmail;
     }
 
-    const updatedUser = await UserModel.findByIdAndUpdate(user._id, updates, { new: true }).select("-password");
+    const updatedUser = await UserModel.findByIdAndUpdate(userId, updates, { new: true }).select("-password");
 
     return res.status(200).json({
       message: "Profile updated successfully",
-      user: {
-        id: updatedUser?._id,
-        username: updatedUser?.username,
-        email: updatedUser?.email,
-        name: updatedUser?.name,
-      },
+      user: formatUser(updatedUser),
     });
   } catch (e: any) {
     console.error("Profile update error:", e);
@@ -233,10 +197,11 @@ UserRoutes.put("/profile", UserMiddleware, async (req: AuthRequest, res: Respons
   }
 });
 
-// PUT /password (Change password securely)
+// PUT /password - Change password securely
 UserRoutes.put("/password", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await UserModel.findById(req.userId);
+    const userId = req.userId;
+    const user = await UserModel.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -272,7 +237,7 @@ UserRoutes.put("/password", UserMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
-// DELETE /account (Permanently delete user account and associated workspaces)
+// DELETE /account - Permanently delete account and associated drawings
 UserRoutes.delete("/account", UserMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId;
@@ -280,27 +245,17 @@ UserRoutes.delete("/account", UserMiddleware, async (req: AuthRequest, res: Resp
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // 1. Delete all drawing workspaces owned by this user
-    await CanvasModel.deleteMany({ ownerId: userId });
-
-    // 2. Remove user from collaborator arrays on shared drawings
+    await CanvasModel.deleteMany({ owner: userId });
     await CanvasModel.updateMany(
-      { "collaborators.userId": userId },
-      { $pull: { collaborators: { userId } } }
+      { "collaborators.user": userId },
+      { $pull: { collaborators: { user: userId } } }
     );
-
-    // 3. Remove pending invitations created by this user
-    await InvitationModel.deleteMany({ createdBy: userId });
-
-    // 4. Delete the user record
+    await InvitationModel.deleteMany({ inviterId: userId });
     await UserModel.findByIdAndDelete(userId);
 
-    // 5. Clear authentication cookies
-    res.clearCookie("RefreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+    req.logout?.(() => {});
+    req.session?.destroy?.(() => {});
+    res.clearCookie("connect.sid");
 
     return res.status(200).json({
       message: "Account and all associated blueprints have been permanently deleted",
@@ -311,51 +266,19 @@ UserRoutes.delete("/account", UserMiddleware, async (req: AuthRequest, res: Resp
   }
 });
 
-// POST /refresh
-UserRoutes.post("/refresh", async (req, res: Response) => {
-  const token = req.cookies?.RefreshToken || req.body?.refreshToken;
-
-  if (!token) {
-    return res.status(401).json({ message: "Refresh token required" });
-  }
-
-  try {
-    const refreshSecret = getJwtRefreshSecret();
-    const decoded = jwt.verify(token, refreshSecret) as { id: string };
-
-    const user = await UserModel.findById(decoded.id).select("-password");
-    if (!user) {
-      return res.status(401).json({ message: "Invalid user for token" });
+// POST /logout - Log out and destroy session
+UserRoutes.post("/logout", (req: any, res: Response) => {
+  req.logout((err: any) => {
+    if (req.session) {
+      req.session.destroy(() => {
+        res.clearCookie("connect.sid");
+        return res.status(200).json({ message: "Logged out successfully" });
+      });
+    } else {
+      res.clearCookie("connect.sid");
+      return res.status(200).json({ message: "Logged out successfully" });
     }
-
-    const accessSecret = getJwtSecret();
-    const newAccessToken = jwt.sign({ id: user._id.toString() }, accessSecret, {
-      expiresIn: "7d",
-    });
-
-    return res.status(200).json({
-      accessToken: newAccessToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        name: user.name,
-      },
-    });
-  } catch (e) {
-    return res.status(401).json({ message: "Expired or invalid refresh token" });
-  }
-});
-
-// POST /logout
-UserRoutes.post("/logout", (req, res: Response) => {
-  res.clearCookie("RefreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
   });
-
-  return res.status(200).json({ message: "Logged out successfully" });
 });
 
 export default UserRoutes;
